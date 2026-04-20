@@ -1,0 +1,37 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{Madrid}
+
+\title{DoRA for Parameter-Efficient Fine-Tuning}
+\subtitle{CS4782 Final Project}
+\author{Team DoRA}
+\date{\today}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}{Project Focus}
+\begin{itemize}
+  \item Reproduce and analyze DoRA vs LoRA
+  \item Tasks: GLUE (SST-2, MRPC, QQP)
+  \item Model: RoBERTa-base with parameter-efficient adaptation
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Method Overview}
+\begin{itemize}
+  \item DoRA decomposes weights into magnitude and direction
+  \item Update direction with low-rank adapters
+  \item Learn per-output magnitude vector for improved expressivity
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Status and Next Steps}
+\begin{itemize}
+  \item Core implementation and tests ready
+  \item Full benchmark and ablation runs in progress
+  \item Demo and final analysis integrated before presentation day
+\end{itemize}
+\end{frame}
+
+\end{document}

@@ -1,0 +1,119 @@
+# -----------------------------
+# Python bytecode and binaries
+# -----------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dylib
+*$py.class
+
+# -----------------------------
+# Virtual environments
+# -----------------------------
+.venv/
+venv/
+env/
+.envrc
+
+# -----------------------------
+# Local environment files
+# -----------------------------
+.env
+.env.*
+*.env
+
+# -----------------------------
+# Build and packaging artifacts
+# -----------------------------
+build/
+dist/
+site/
+*.egg
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# -----------------------------
+# Tooling caches
+# -----------------------------
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+.nox/
+.tox/
+
+# -----------------------------
+# Coverage/test outputs
+# -----------------------------
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# -----------------------------
+# Notebook artifacts
+# -----------------------------
+.ipynb_checkpoints/
+notebooks/**/.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# -----------------------------
+# ML experiment/runtime outputs
+# -----------------------------
+wandb/
+mlruns/
+runs/
+outputs/
+artifacts/
+checkpoints/
+benchmark_results/
+dora_output/
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+# -----------------------------
+# Caches for datasets/models
+# -----------------------------
+.cache/
+.huggingface/
+
+# -----------------------------
+# Logs and temp files
+# -----------------------------
+*.log
+*.out
+tmp/
+temp/
+
+# -----------------------------
+# OS/editor files
+# -----------------------------
+.DS_Store
+.vscode/
+.idea/
+
+# -----------------------------
+# Presentation build artifacts
+# -----------------------------
+presentation/*.aux
+presentation/*.bbl
+presentation/*.bcf
+presentation/*.blg
+presentation/*.fdb_latexmk
+presentation/*.fls
+presentation/*.log
+presentation/*.nav
+presentation/*.out
+presentation/*.run.xml
+presentation/*.snm
+presentation/*.synctex.gz
+presentation/*.toc
+presentation/*.vrb
+presentation/*.pdf
