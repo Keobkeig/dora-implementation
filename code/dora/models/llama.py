@@ -389,6 +389,57 @@ def convert_llama_to_dora(
     return model
 
 
+def apply_dora_to_model(
+    model: nn.Module,
+    target_modules: Optional[List[str]] = None,
+    rank: int = 8,
+    alpha: float = 16.0,
+    dropout: float = 0.0,
+    eps: float = 1e-8,
+) -> nn.Module:
+    """
+    Apply DoRA to matching nn.Linear layers in any HuggingFace model.
+
+    Works with AutoModelForSequenceClassification, AutoModelForCausalLM, etc.
+    Walks the module tree and replaces each nn.Linear whose attribute name
+    (last component of the dotted path) appears in target_modules.
+
+    Args:
+        model: Any nn.Module (typically a HuggingFace model)
+        target_modules: Attribute names to replace, e.g. ["q_proj", "v_proj"]
+        rank: LoRA rank
+        alpha: LoRA alpha
+        dropout: Dropout on the LoRA path
+        eps: Epsilon for magnitude normalisation
+
+    Returns:
+        The same model object with DoRA layers injected in-place.
+    """
+    if target_modules is None:
+        target_modules = [
+            "q_proj", "k_proj", "v_proj", "o_proj",
+            "gate_proj", "up_proj", "down_proj",
+        ]
+
+    # Collect replacements first to avoid mutating the module tree mid-iteration
+    replacements = []
+    for name, module in model.named_modules():
+        leaf_name = name.split(".")[-1]
+        if leaf_name in target_modules and isinstance(module, nn.Linear):
+            parent_path = ".".join(name.split(".")[:-1])
+            replacements.append((parent_path, leaf_name, module))
+
+    for parent_path, leaf_name, module in replacements:
+        parent = model.get_submodule(parent_path) if parent_path else model
+        setattr(parent, leaf_name, create_dora_layer(module, rank, alpha, dropout, eps))
+
+    logging.info(
+        f"Applied DoRA to {len(replacements)} linear layers "
+        f"(target_modules={target_modules}, rank={rank}, alpha={alpha})"
+    )
+    return model
+
+
 def create_dora_config_for_llama(
     model_size: str = "7B", task_type: str = "causal_lm", rank: int = 8, alpha: float = 16.0
 ) -> LlamaDoRAConfig:

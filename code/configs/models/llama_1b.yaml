@@ -1,0 +1,36 @@
+# DoRA configuration for LLaMA 3.2-1B (small)
+
+model:
+  name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+  torch_dtype: "bfloat16"
+  device_map: "auto"
+
+dora:
+  rank: 8
+  alpha: 16.0
+  dropout: 0.05
+  eps: 1e-8
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+
+training:
+  learning_rate: 2e-4
+  weight_decay: 0.01
+  num_epochs: 5
+  batch_size: 32
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  warmup_ratio: 0.06
+  scheduler_type: "cosine"
+  max_length: 128
+  fp16: false
+  bf16: true
+  dataloader_num_workers: 2
+
+output:
+  output_dir: "../results/llama_1b_dora"
+  use_wandb: true
+  wandb_project: "dora_glue"

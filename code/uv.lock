@@ -424,6 +424,7 @@ dependencies = [
     { name = "torchvision" },
     { name = "tqdm" },
     { name = "transformers" },
+    { name = "wandb" },
 ]
 
 [package.optional-dependencies]
@@ -463,6 +464,7 @@ requires-dist = [
     { name = "torchvision", specifier = ">=0.15.0" },
     { name = "tqdm", specifier = ">=4.64.0" },
     { name = "transformers", specifier = ">=4.30.0" },
+    { name = "wandb", specifier = ">=0.26.0" },
     { name = "wandb", marker = "extra == 'tracking'", specifier = ">=0.15.0" },
 ]
 provides-extras = ["dev", "notebooks", "tracking"]
