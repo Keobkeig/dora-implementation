@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 """
-Fine-tune LLaMA models with DoRA or LoRA on GLUE benchmark tasks.
+Fine-tune LLaMA models on GLUE benchmark tasks.
+
+Supports three methods:
+  - dora  : DoRA (Weight-Decomposed Low-Rank Adaptation) — default
+  - lora  : Standard LoRA baseline
+  - full  : Full fine-tuning (all parameters trainable)
 
 Usage:
     # DoRA (default)
-    python scripts/train_glue.py --model 1b --task sst2
-    python scripts/train_glue.py --model 3b --task mrpc --rank 16 --alpha 32
+    uv run scripts/train_glue.py --model 1b --task sst2
+    uv run scripts/train_glue.py --model 3b --task mrpc --rank 16 --alpha 32
 
-    # LoRA baseline
-    python scripts/train_glue.py --model 1b --task sst2 --method lora
-    python scripts/train_glue.py --model 1b --task sst2 --method lora --rank 8
+    # LoRA baseline (same rank/alpha for apples-to-apples comparison)
+    uv run scripts/train_glue.py --model 1b --task sst2 --method lora
+
+    # Full fine-tuning
+    uv run scripts/train_glue.py --model 1b --task sst2 --method full
 
     # Explicit model name
-    python scripts/train_glue.py --model_name meta-llama/Llama-3.2-1B --task rte
+    uv run scripts/train_glue.py --model_name meta-llama/Llama-3.2-1B --task rte
 """
 
 import argparse
@@ -213,9 +220,9 @@ def parse_args():
     parser.add_argument("--task", required=True, choices=list(GLUE_TASKS.keys()))
     parser.add_argument(
         "--method",
-        choices=["dora", "lora"],
+        choices=["dora", "lora", "full"],
         default="dora",
-        help="Adapter method: dora (default) or lora baseline",
+        help="Adapter method: dora (default), lora baseline, or full fine-tuning",
     )
 
     # Adapter hyperparameters
@@ -260,18 +267,22 @@ def main():
     task_cfg = GLUE_TASKS[args.task]
 
     if args.output_dir is None:
+        run_tag = f"{args.method}_r{args.rank}" if args.method != "full" else "full"
         args.output_dir = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "..",
             "results",
-            f"glue_{args.task}_{size_tag}_{args.method}_r{args.rank}",
+            f"glue_{args.task}_{size_tag}_{run_tag}",
         )
     os.makedirs(args.output_dir, exist_ok=True)
 
-    logger.info(
-        f"Model: {model_name} | Task: {args.task} | Method: {args.method} | "
-        f"rank={args.rank} alpha={args.alpha} target={args.target_modules}"
-    )
+    if args.method == "full":
+        logger.info(f"Model: {model_name} | Task: {args.task} | Method: full fine-tuning")
+    else:
+        logger.info(
+            f"Model: {model_name} | Task: {args.task} | Method: {args.method} | "
+            f"rank={args.rank} alpha={args.alpha} target={args.target_modules}"
+        )
 
     # ------------------------------------------------------------------
     # Tokenizer
@@ -297,7 +308,7 @@ def main():
     model.config.pad_token_id = tokenizer.pad_token_id
 
     # ------------------------------------------------------------------
-    # Apply adapter (DoRA or LoRA)
+    # Apply adapter or prepare for full fine-tuning
     # ------------------------------------------------------------------
     if args.method == "dora":
         apply_dora_to_model(
@@ -307,7 +318,8 @@ def main():
             alpha=args.alpha,
             dropout=args.dropout,
         )
-    else:
+        freeze_base_weights(model)
+    elif args.method == "lora":
         apply_lora_to_model(
             model,
             target_modules=args.target_modules,
@@ -315,7 +327,14 @@ def main():
             alpha=args.alpha,
             dropout=args.dropout,
         )
-    freeze_base_weights(model)
+        freeze_base_weights(model)
+    else:
+        # Full fine-tuning: all parameters trainable, use a lower LR
+        for param in model.parameters():
+            param.requires_grad = True
+        if args.lr == 2e-4:  # user didn't override; use a FT-appropriate default
+            args.lr = 2e-5
+            logger.info(f"Full fine-tuning: auto-setting lr={args.lr}")
 
     # Print trainable-parameter summary
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -379,7 +398,7 @@ def main():
         fp16=args.fp16,
         bf16=args.bf16,
         report_to=report_to,
-        run_name=f"{args.method}_{args.task}_{size_tag}_r{args.rank}",
+        run_name=f"{args.method}_{args.task}_{size_tag}" + (f"_r{args.rank}" if args.method != "full" else ""),
         logging_steps=50,
         seed=args.seed,
         dataloader_num_workers=0 if use_mps else 2,
@@ -403,12 +422,18 @@ def main():
     results = trainer.evaluate()
     logger.info(f"Results on {args.task}: {results}")
 
-    # Save adapter weights only (not the full model)
-    adapter_path = os.path.join(args.output_dir, f"{args.method}_adapter.pt")
-    if args.method == "dora":
+    # Save model / adapter weights
+    if args.method == "full":
+        # Save the full model
+        model.save_pretrained(os.path.join(args.output_dir, "full_model"))
+        tokenizer.save_pretrained(os.path.join(args.output_dir, "full_model"))
+        logger.info(f"Full model saved -> {args.output_dir}/full_model")
+    elif args.method == "dora":
+        adapter_path = os.path.join(args.output_dir, "dora_adapter.pt")
         LlamaDoRAModel.save_dora_adapter(model, adapter_path)
+        logger.info(f"DoRA adapter saved -> {adapter_path}")
     else:
-        # For LoRA, save the LoRA-specific state dict
+        adapter_path = os.path.join(args.output_dir, "lora_adapter.pt")
         lora_state = {}
         for name, module in model.named_modules():
             if isinstance(module, LoRALinear):
@@ -417,7 +442,7 @@ def main():
                     "lora_B": module.lora_B.data,
                 }
         torch.save({"lora_state": lora_state}, adapter_path)
-    logger.info(f"{args.method.upper()} adapter saved → {adapter_path}")
+        logger.info(f"LoRA adapter saved -> {adapter_path}")
 
     return results
 
