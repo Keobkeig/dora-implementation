@@ -9,6 +9,7 @@ __author__ = "DoRA Implementation Team"
 
 from .layers.base import DoRAConfig, DoRAModule, DoRAStateManager
 from .layers.dora_linear import DoRAConv2d, DoRALinear, create_dora_layer
+from .layers.lora_linear import LoRALinear, apply_lora_to_model, create_lora_layer
 from .utils.math_utils import DoRAMath
 
 __all__ = [
@@ -19,4 +20,7 @@ __all__ = [
     "DoRAModule",
     "DoRAStateManager",
     "DoRAMath",
+    "LoRALinear",
+    "create_lora_layer",
+    "apply_lora_to_model",
 ]

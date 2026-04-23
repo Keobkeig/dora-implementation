@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """
-Fine-tune LLaMA models with DoRA on GLUE benchmark tasks.
+Fine-tune LLaMA models with DoRA or LoRA on GLUE benchmark tasks.
 
 Usage:
-    # Size presets (requires HuggingFace access token for gated models)
+    # DoRA (default)
     python scripts/train_glue.py --model 1b --task sst2
     python scripts/train_glue.py --model 3b --task mrpc --rank 16 --alpha 32
-    python scripts/train_glue.py --model 7b --task cola --bf16
+
+    # LoRA baseline
+    python scripts/train_glue.py --model 1b --task sst2 --method lora
+    python scripts/train_glue.py --model 1b --task sst2 --method lora --rank 8
 
     # Explicit model name
     python scripts/train_glue.py --model_name meta-llama/Llama-3.2-1B --task rte
@@ -36,6 +39,7 @@ from transformers import (
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dora.models.llama import LlamaDoRAModel, apply_dora_to_model
+from dora.layers.lora_linear import LoRALinear, apply_lora_to_model
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -207,8 +211,14 @@ def parse_args():
     model_group.add_argument("--model_name", type=str, help="HuggingFace model ID or local path")
 
     parser.add_argument("--task", required=True, choices=list(GLUE_TASKS.keys()))
+    parser.add_argument(
+        "--method",
+        choices=["dora", "lora"],
+        default="dora",
+        help="Adapter method: dora (default) or lora baseline",
+    )
 
-    # DoRA hyperparameters
+    # Adapter hyperparameters
     parser.add_argument("--rank", type=int, default=8, help="LoRA rank")
     parser.add_argument("--alpha", type=float, default=16.0, help="LoRA alpha")
     parser.add_argument("--dropout", type=float, default=0.05)
@@ -216,7 +226,7 @@ def parse_args():
         "--target_modules",
         nargs="+",
         default=DEFAULT_TARGET_MODULES,
-        help="Linear layer names to apply DoRA to",
+        help="Linear layer names to apply adapter to",
     )
 
     # Training
@@ -254,12 +264,12 @@ def main():
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "..",
             "results",
-            f"glue_{args.task}_{size_tag}_r{args.rank}",
+            f"glue_{args.task}_{size_tag}_{args.method}_r{args.rank}",
         )
     os.makedirs(args.output_dir, exist_ok=True)
 
     logger.info(
-        f"Model: {model_name} | Task: {args.task} | "
+        f"Model: {model_name} | Task: {args.task} | Method: {args.method} | "
         f"rank={args.rank} alpha={args.alpha} target={args.target_modules}"
     )
 
@@ -287,17 +297,33 @@ def main():
     model.config.pad_token_id = tokenizer.pad_token_id
 
     # ------------------------------------------------------------------
-    # Apply DoRA
+    # Apply adapter (DoRA or LoRA)
     # ------------------------------------------------------------------
-    apply_dora_to_model(
-        model,
-        target_modules=args.target_modules,
-        rank=args.rank,
-        alpha=args.alpha,
-        dropout=args.dropout,
-    )
+    if args.method == "dora":
+        apply_dora_to_model(
+            model,
+            target_modules=args.target_modules,
+            rank=args.rank,
+            alpha=args.alpha,
+            dropout=args.dropout,
+        )
+    else:
+        apply_lora_to_model(
+            model,
+            target_modules=args.target_modules,
+            rank=args.rank,
+            alpha=args.alpha,
+            dropout=args.dropout,
+        )
     freeze_base_weights(model)
-    LlamaDoRAModel.print_trainable_parameters(model)
+
+    # Print trainable-parameter summary
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    total = sum(p.numel() for p in model.parameters())
+    logger.info(
+        f"[{args.method.upper()}] Trainable: {trainable:,} / {total:,} "
+        f"({100 * trainable / total:.3f}%)"
+    )
 
     # ------------------------------------------------------------------
     # Datasets
@@ -353,7 +379,7 @@ def main():
         fp16=args.fp16,
         bf16=args.bf16,
         report_to=report_to,
-        run_name=f"dora_{args.task}_{size_tag}_r{args.rank}",
+        run_name=f"{args.method}_{args.task}_{size_tag}_r{args.rank}",
         logging_steps=50,
         seed=args.seed,
         dataloader_num_workers=0 if use_mps else 2,
@@ -377,10 +403,21 @@ def main():
     results = trainer.evaluate()
     logger.info(f"Results on {args.task}: {results}")
 
-    # Save DoRA adapter weights only (not the full model)
-    adapter_path = os.path.join(args.output_dir, "dora_adapter.pt")
-    LlamaDoRAModel.save_dora_adapter(model, adapter_path)
-    logger.info(f"DoRA adapter saved → {adapter_path}")
+    # Save adapter weights only (not the full model)
+    adapter_path = os.path.join(args.output_dir, f"{args.method}_adapter.pt")
+    if args.method == "dora":
+        LlamaDoRAModel.save_dora_adapter(model, adapter_path)
+    else:
+        # For LoRA, save the LoRA-specific state dict
+        lora_state = {}
+        for name, module in model.named_modules():
+            if isinstance(module, LoRALinear):
+                lora_state[name] = {
+                    "lora_A": module.lora_A.data,
+                    "lora_B": module.lora_B.data,
+                }
+        torch.save({"lora_state": lora_state}, adapter_path)
+    logger.info(f"{args.method.upper()} adapter saved → {adapter_path}")
 
     return results
 
