@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run *)",
+      "Bash(echo \"RTE DoRA started \\(PID $!\\)\")",
+      "Bash(kill %1)",
+      "Bash(bash scripts/run_roberta_experiments.sh)"
+    ]
+  }
+}

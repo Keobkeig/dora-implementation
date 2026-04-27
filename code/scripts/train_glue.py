@@ -120,11 +120,24 @@ MODEL_PRESETS = {
     "1b": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",   # LLaMA arch, fully open
     "3b": "openlm-research/open_llama_3b",          # LLaMA arch, fully open
     "7b": "huggyllama/llama-7b",                    # LLaMA arch, fully open
+    "roberta": "FacebookAI/roberta-base",            # RoBERTa-base (~125M params)
 }
 
-# Default DoRA target modules for sequence classification (attention only;
-# adding MLP projections increases trainable params but often helps)
-DEFAULT_TARGET_MODULES = ["q_proj", "k_proj", "v_proj", "o_proj"]
+# Architecture-specific target modules (attention projections only)
+_TARGET_MODULES_BY_ARCH = {
+    # LLaMA / Mistral / Falcon style
+    "llama": ["q_proj", "k_proj", "v_proj", "o_proj"],
+    # BERT / RoBERTa style — "dense" is intentionally excluded because it also
+    # matches the classifier head (classifier.dense), which must stay unfrozen.
+    "roberta": ["query", "key", "value"],
+    "bert": ["query", "key", "value"],
+}
+_DEFAULT_TARGET_MODULES = ["q_proj", "k_proj", "v_proj", "o_proj"]
+
+
+def get_default_target_modules(model: torch.nn.Module) -> list:
+    model_type = getattr(getattr(model, "config", None), "model_type", "")
+    return _TARGET_MODULES_BY_ARCH.get(model_type, _DEFAULT_TARGET_MODULES)
 
 
 # ---------------------------------------------------------------------------
@@ -192,12 +205,14 @@ def tokenize_glue(dataset, tokenizer, task: str, max_length: int):
 # ---------------------------------------------------------------------------
 
 def freeze_base_weights(model: torch.nn.Module):
-    """Keep only DoRA adapter params and the classification head trainable."""
+    """Keep only adapter params and the classification head trainable."""
     for name, param in model.named_parameters():
         leaf = name.split(".")[-1]
-        is_dora = leaf in ("lora_A", "lora_B", "magnitude")
-        is_head = "score" in name  # LlamaForSequenceClassification uses model.score
-        param.requires_grad = is_dora or is_head
+        is_adapter = leaf in ("lora_A", "lora_B", "magnitude")
+        # LlamaForSequenceClassification head: model.score
+        # RobertaForSequenceClassification head: classifier.dense / classifier.out_proj
+        is_head = "score" in name or "classifier" in name
+        param.requires_grad = is_adapter or is_head
 
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total = sum(p.numel() for p in model.parameters())
@@ -232,8 +247,8 @@ def parse_args():
     parser.add_argument(
         "--target_modules",
         nargs="+",
-        default=DEFAULT_TARGET_MODULES,
-        help="Linear layer names to apply adapter to",
+        default=None,
+        help="Linear layer names to apply adapter to (auto-detected per architecture if omitted)",
     )
 
     # Training
@@ -279,9 +294,10 @@ def main():
     if args.method == "full":
         logger.info(f"Model: {model_name} | Task: {args.task} | Method: full fine-tuning")
     else:
+        target_label = args.target_modules if args.target_modules is not None else "auto"
         logger.info(
             f"Model: {model_name} | Task: {args.task} | Method: {args.method} | "
-            f"rank={args.rank} alpha={args.alpha} target={args.target_modules}"
+            f"rank={args.rank} alpha={args.alpha} target={target_label}"
         )
 
     # ------------------------------------------------------------------
@@ -306,6 +322,11 @@ def main():
         ignore_mismatched_sizes=True,
     )
     model.config.pad_token_id = tokenizer.pad_token_id
+
+    # Resolve target modules (auto-detect if not explicitly passed)
+    if args.target_modules is None:
+        args.target_modules = get_default_target_modules(model)
+        logger.info(f"Auto-detected target_modules={args.target_modules} for {model.config.model_type}")
 
     # ------------------------------------------------------------------
     # Apply adapter or prepare for full fine-tuning
