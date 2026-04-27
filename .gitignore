@@ -117,3 +117,9 @@ presentation/*.synctex.gz
 presentation/*.toc
 presentation/*.vrb
 presentation/*.pdf
+
+# -----------------------------
+# Dataset files (too large for git — download via scripts/download_cornell_grasp.py)
+# -----------------------------
+data/**
+!data/.gitkeep

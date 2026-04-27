@@ -4,7 +4,12 @@
       "Bash(uv run *)",
       "Bash(echo \"RTE DoRA started \\(PID $!\\)\")",
       "Bash(kill %1)",
-      "Bash(bash scripts/run_roberta_experiments.sh)"
+      "Bash(bash scripts/run_roberta_experiments.sh)",
+      "Bash(uv add *)",
+      "Bash(uv sync *)",
+      "Bash(bash scripts/run_grasp_experiments.sh --data_dir ../data/cornell_grasps)",
+      "Bash(xargs -I {} basename {})",
+      "Bash(echo \"PID: $!\")"
     ]
   }
 }

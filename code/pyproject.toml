@@ -22,6 +22,10 @@ dependencies = [
   "tensorboard>=2.10.0",
   "gradio>=4.44.0",
   "wandb>=0.26.0",
+  "opencv-python>=4.8.0",
+  "shapely>=2.0.0",
+  "bitsandbytes>=0.43.0",
+  "timm>=0.9.10,<1.0.0",
 ]
 
 [project.optional-dependencies]

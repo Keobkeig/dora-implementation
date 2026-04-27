@@ -127,10 +127,12 @@ MODEL_PRESETS = {
 _TARGET_MODULES_BY_ARCH = {
     # LLaMA / Mistral / Falcon style
     "llama": ["q_proj", "k_proj", "v_proj", "o_proj"],
-    # BERT / RoBERTa style — "dense" is intentionally excluded because it also
-    # matches the classifier head (classifier.dense), which must stay unfrozen.
+    # BERT / RoBERTa / ViT style — "dense" excluded: also matches classifier.dense
     "roberta": ["query", "key", "value"],
-    "bert": ["query", "key", "value"],
+    "bert":    ["query", "key", "value"],
+    "vit":                ["query", "key", "value"],
+    # SigLIP (OpenVLA's visual encoder) uses LLaMA-style projection names
+    "siglip_vision_model": ["q_proj", "k_proj", "v_proj"],
 }
 _DEFAULT_TARGET_MODULES = ["q_proj", "k_proj", "v_proj", "o_proj"]
 
