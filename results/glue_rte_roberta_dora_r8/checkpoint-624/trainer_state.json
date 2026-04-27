@@ -1,0 +1,154 @@
+{
+  "best_global_step": 468,
+  "best_metric": 0.7111913357400722,
+  "best_model_checkpoint": "C:\\Users\\Owner\\Documents\\dora-implementation\\code\\..\\results\\glue_rte_roberta_dora_r8\\checkpoint-468",
+  "epoch": 4.0,
+  "eval_steps": 500,
+  "global_step": 624,
+  "is_hyper_param_search": false,
+  "is_local_process_zero": true,
+  "is_world_process_zero": true,
+  "log_history": [
+    {
+      "epoch": 0.32051282051282054,
+      "grad_norm": 1.1015625,
+      "learning_rate": 0.00019999175645197536,
+      "loss": 0.69963623046875,
+      "step": 50
+    },
+    {
+      "epoch": 0.6410256410256411,
+      "grad_norm": 2.078125,
+      "learning_rate": 0.00019743807616031626,
+      "loss": 0.69830078125,
+      "step": 100
+    },
+    {
+      "epoch": 0.9615384615384616,
+      "grad_norm": 2.28125,
+      "learning_rate": 0.00019043892045582803,
+      "loss": 0.69346435546875,
+      "step": 150
+    },
+    {
+      "epoch": 1.0,
+      "eval_accuracy": 0.4729241877256318,
+      "eval_loss": 0.6955945491790771,
+      "eval_runtime": 13.3445,
+      "eval_samples_per_second": 20.758,
+      "eval_steps_per_second": 0.674,
+      "step": 156
+    },
+    {
+      "epoch": 1.282051282051282,
+      "grad_norm": 3.140625,
+      "learning_rate": 0.00017931361599007216,
+      "loss": 0.6831330871582031,
+      "step": 200
+    },
+    {
+      "epoch": 1.6025641025641026,
+      "grad_norm": 1.4375,
+      "learning_rate": 0.00016456973915835214,
+      "loss": 0.6345671081542968,
+      "step": 250
+    },
+    {
+      "epoch": 1.9230769230769231,
+      "grad_norm": 4.71875,
+      "learning_rate": 0.00014687995863936135,
+      "loss": 0.6293213653564453,
+      "step": 300
+    },
+    {
+      "epoch": 2.0,
+      "eval_accuracy": 0.7075812274368231,
+      "eval_loss": 0.5745236873626709,
+      "eval_runtime": 12.7001,
+      "eval_samples_per_second": 21.811,
+      "eval_steps_per_second": 0.709,
+      "step": 312
+    },
+    {
+      "epoch": 2.2435897435897436,
+      "grad_norm": 2.4375,
+      "learning_rate": 0.00012705134583120638,
+      "loss": 0.5616095733642578,
+      "step": 350
+    },
+    {
+      "epoch": 2.564102564102564,
+      "grad_norm": 4.21875,
+      "learning_rate": 0.00010598855335207032,
+      "loss": 0.5544413757324219,
+      "step": 400
+    },
+    {
+      "epoch": 2.8846153846153846,
+      "grad_norm": 2.515625,
+      "learning_rate": 8.465254153472363e-05,
+      "loss": 0.5451560974121094,
+      "step": 450
+    },
+    {
+      "epoch": 3.0,
+      "eval_accuracy": 0.7111913357400722,
+      "eval_loss": 0.5840857625007629,
+      "eval_runtime": 12.4395,
+      "eval_samples_per_second": 22.268,
+      "eval_steps_per_second": 0.724,
+      "step": 468
+    },
+    {
+      "epoch": 3.2051282051282053,
+      "grad_norm": 3.53125,
+      "learning_rate": 6.401673596061747e-05,
+      "loss": 0.5224327087402344,
+      "step": 500
+    },
+    {
+      "epoch": 3.5256410256410255,
+      "grad_norm": 2.875,
+      "learning_rate": 4.502261628450898e-05,
+      "loss": 0.5522714233398438,
+      "step": 550
+    },
+    {
+      "epoch": 3.8461538461538463,
+      "grad_norm": 7.5,
+      "learning_rate": 2.8536762547136464e-05,
+      "loss": 0.5037976837158203,
+      "step": 600
+    },
+    {
+      "epoch": 4.0,
+      "eval_accuracy": 0.703971119133574,
+      "eval_loss": 0.550224244594574,
+      "eval_runtime": 12.4323,
+      "eval_samples_per_second": 22.281,
+      "eval_steps_per_second": 0.724,
+      "step": 624
+    }
+  ],
+  "logging_steps": 50,
+  "max_steps": 780,
+  "num_input_tokens_seen": 0,
+  "num_train_epochs": 5,
+  "save_steps": 500,
+  "stateful_callbacks": {
+    "TrainerControl": {
+      "args": {
+        "should_epoch_stop": false,
+        "should_evaluate": false,
+        "should_log": false,
+        "should_save": true,
+        "should_training_stop": false
+      },
+      "attributes": {}
+    }
+  },
+  "total_flos": 487000627121904.0,
+  "train_batch_size": 16,
+  "trial_name": null,
+  "trial_params": null
+}
