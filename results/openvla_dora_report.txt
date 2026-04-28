@@ -1,0 +1,10 @@
+model: openvla/openvla-7b
+total_params: 7541237184
+visual_layers: 0
+llm_layers: 224
+dora_rank8_visual_only_params: 0
+dora_rank8_visual_only_pct: 0.0000
+dora_rank8_full_params: 21348352
+dora_rank8_full_pct: 0.2831
+forward_pass: OK
+sample_output: '<forward pass OK>'

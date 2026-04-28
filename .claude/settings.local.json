@@ -9,7 +9,10 @@
       "Bash(uv sync *)",
       "Bash(bash scripts/run_grasp_experiments.sh --data_dir ../data/cornell_grasps)",
       "Bash(xargs -I {} basename {})",
-      "Bash(echo \"PID: $!\")"
+      "Bash(echo \"PID: $!\")",
+      "Bash(grep -v \"^$\")",
+      "Bash(git ls-tree *)",
+      "Bash(awk '{print $1}')"
     ]
   }
 }

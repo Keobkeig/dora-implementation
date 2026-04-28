@@ -23,6 +23,7 @@ Usage:
 """
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -38,6 +39,7 @@ from transformers import (
     DataCollatorWithPadding,
     EvalPrediction,
     Trainer,
+    TrainerCallback,
     TrainingArguments,
     set_seed,
 )
@@ -200,6 +202,92 @@ def tokenize_glue(dataset, tokenizer, task: str, max_length: int):
     if "label" in ds.column_names:
         ds = ds.rename_column("label", "labels")
     return ds
+
+
+# ---------------------------------------------------------------------------
+# Per-epoch adapter statistics callback
+# ---------------------------------------------------------------------------
+
+class AdapterStatsCallback(TrainerCallback):
+    """
+    After every evaluation, snapshot per-layer adapter statistics and write
+    them to `<output_dir>/adapter_stats.json` when training ends.
+
+    Captured per epoch:
+      - epoch, eval metric (accuracy / F1 / MCC), train loss
+      - mean & std of DoRA magnitude vectors  (DoRA only)
+      - Frobenius norm of the low-rank update  ΔW = (α/r) · lora_B @ lora_A
+        (both DoRA and LoRA)
+    """
+
+    def __init__(self, model: torch.nn.Module, output_dir: str, primary_metric: str):
+        self.model = model
+        self.output_dir = output_dir
+        self.primary_metric = primary_metric
+        self.records: list = []
+        self._last_train_loss: float = float("nan")
+        self._init_mag_norms: dict = {}   # layer_name → initial ||magnitude||
+
+    def on_train_begin(self, args, state, control, **kwargs):
+        """Snapshot initial magnitude norms so we can track relative drift."""
+        for name, module in self.model.named_modules():
+            if hasattr(module, "magnitude") and hasattr(module, "lora_A"):
+                with torch.no_grad():
+                    self._init_mag_norms[name] = module.magnitude.float().norm().item()
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        if logs and "loss" in logs:
+            self._last_train_loss = float(logs["loss"])
+
+    def on_evaluate(self, args, state, control, metrics=None, **kwargs):
+        epoch = state.epoch or 0.0
+        eval_metric = float(metrics.get(f"eval_{self.primary_metric}", float("nan")))
+        eval_loss   = float(metrics.get("eval_loss", float("nan")))
+
+        mag_means, mag_stds, lora_norms = [], [], []
+
+        mag_rel_drifts = []   # ||m_t - m_0|| / ||m_0|| per layer
+
+        for name, module in self.model.named_modules():
+            # DoRA layer
+            if hasattr(module, "magnitude") and hasattr(module, "lora_A") and hasattr(module, "lora_B"):
+                with torch.no_grad():
+                    mag = module.magnitude.float()
+                    mag_means.append(mag.mean().item())
+                    mag_stds.append(mag.std().item())
+                    # Relative drift from initialisation — robust to cancellation
+                    init_norm = self._init_mag_norms.get(name)
+                    if init_norm and init_norm > 0:
+                        curr_norm = mag.norm().item()
+                        mag_rel_drifts.append(abs(curr_norm - init_norm) / init_norm)
+                    delta = module.lora_B.float() @ module.lora_A.float()
+                    lora_norms.append(delta.norm().item())
+            # LoRA-only layer (no magnitude)
+            elif hasattr(module, "lora_A") and hasattr(module, "lora_B") and not hasattr(module, "magnitude"):
+                with torch.no_grad():
+                    delta = module.lora_B.float() @ module.lora_A.float()
+                    lora_norms.append(delta.norm().item())
+
+        record = {
+            "epoch":                  round(epoch, 2),
+            "eval_metric":            round(eval_metric, 6),
+            "eval_loss":              round(eval_loss, 6),
+            "train_loss":             round(self._last_train_loss, 6),
+            "lora_norm_mean":         round(float(np.mean(lora_norms)),      6) if lora_norms      else None,
+            "lora_norm_std":          round(float(np.std(lora_norms)),        6) if lora_norms      else None,
+            # magnitude_rel_drift: how much the per-layer magnitude norms have
+            # shifted from their initial values (avoids mean-cancellation)
+            "magnitude_rel_drift":    round(float(np.mean(mag_rel_drifts)),  6) if mag_rel_drifts  else None,
+            "magnitude_mean":         round(float(np.mean(mag_means)),        6) if mag_means       else None,
+            "n_adapter_layers":       len(lora_norms),
+        }
+        self.records.append(record)
+
+    def on_train_end(self, args, state, control, **kwargs):
+        out_path = os.path.join(self.output_dir, "adapter_stats.json")
+        with open(out_path, "w") as f:
+            json.dump(self.records, f, indent=2)
+        logger.info(f"Adapter stats saved → {out_path}  ({len(self.records)} epochs)")
 
 
 # ---------------------------------------------------------------------------
@@ -428,6 +516,12 @@ def main():
         dataloader_pin_memory=not use_mps,
     )
 
+    stats_cb = AdapterStatsCallback(
+        model=model,
+        output_dir=args.output_dir,
+        primary_metric=task_cfg["primary_metric"],
+    )
+
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -436,6 +530,7 @@ def main():
         processing_class=tokenizer,
         data_collator=DataCollatorWithPadding(tokenizer=tokenizer),
         compute_metrics=build_compute_metrics(args.task),
+        callbacks=[stats_cb] if args.method in ("dora", "lora") else [],
     )
 
     logger.info("Training...")

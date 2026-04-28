@@ -45,12 +45,12 @@ Dataset: 885 images, 708 train / 177 val, image-level split.
 
 | Backbone | Params | Method | Trainable | Success Rate |
 |----------|-------:|--------|----------:|-------------:|
-| ViT-Base/16 | 87M | DoRA | ~1.0% | **7.9%** |
-| ViT-Base/16 | 87M | LoRA | ~1.0% | 6.2% |
+| ViT-Base/16 | 87M | DoRA | ~1.0% | 7.9% |
+| ViT-Base/16 | 87M | LoRA | ~1.0% | **6.2%** |
 | ViT-Base/16 | 87M | Full FT | 100% | 0.6% |
-| SigLIP-base/16 (OpenVLA encoder) | 93M | DoRA | ~1.0% | *(running)* |
-| SigLIP-base/16 | 93M | LoRA | ~1.0% | *(running)* |
-| SigLIP-base/16 | 93M | Full FT | 100% | *(running)* |
+| SigLIP-base/16 (OpenVLA encoder) | 93M | DoRA | ~1.0% | 19.8% |
+| SigLIP-base/16 | 93M | LoRA | ~1.0% | **20.3%** |
+| SigLIP-base/16 | 93M | Full FT | 100% | 15.8% |
 
 ---
 
@@ -60,8 +60,14 @@ DoRA applied to OpenVLA-7B loaded in 4-bit NF4 quantisation (bitsandbytes).
 
 | Strategy | Target layers | Adapter params (rank=8) | Trainable % |
 |----------|--------------|------------------------:|------------:|
-| visual_only | SigLIP `q/k/v_proj` | *(running)* | *(running)* |
-| full | SigLIP + LLaMA-2 attention+MLP | *(running)* | *(running)* |
+| full (LLM attention + MLP) | 224 layers | **21,348,352** | **0.28%** |
+
+Total parameters: 7.54B. Forward pass verified on CPU. DoRA adapters add 21M parameters to a frozen 7.54B model — less than 0.3% overhead.
+
+To replicate (requires ~14 GB RAM, weights already cached after first run):
+```powershell
+uv run scripts/openvla_demo.py 2>&1 | Tee-Object -FilePath ..\results\openvla_demo.log
+```
 
 ---
 
