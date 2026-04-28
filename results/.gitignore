@@ -1,0 +1,11 @@
+# Keep only useful data files, block model/tokenizer artifacts
+checkpoint-*/*
+!checkpoint-*/trainer_state.json
+**/tokenizer.json
+**/tokenizer_config.json
+**/config.json
+**/vocab.txt
+**/special_tokens_map.json
+full_model/
+vit_finetuned/
+backbone_finetuned/

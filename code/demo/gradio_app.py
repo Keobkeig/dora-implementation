@@ -92,6 +92,9 @@ def _load_adapter_stats(run_dir: str):
 # Figure helpers
 # ---------------------------------------------------------------------------
 
+FIG_W, FIG_H = 8, 4.8   # all single-panel figures use this size
+
+
 def _style(ax, title, xlabel, ylabel):
     ax.set_title(title, fontsize=13, fontweight="bold", pad=10)
     ax.set_xlabel(xlabel, fontsize=10)
@@ -107,7 +110,7 @@ def fig_glue_comparison():
     x = np.arange(len(tasks))
     width = 0.25
 
-    fig, ax = plt.subplots(figsize=(9, 4.5))
+    fig, ax = plt.subplots(figsize=(FIG_W, FIG_H))
     for i, method in enumerate(methods):
         vals = [GLUE_RESULTS[t][method] for t in tasks]
         bars = ax.bar(x + (i - 1) * width, vals, width, label=method,
@@ -130,7 +133,7 @@ def fig_scale_study():
     models = list(SCALE_RESULTS.keys())
     accs = [SCALE_RESULTS[m] for m in models]
 
-    fig, ax = plt.subplots(figsize=(5, 3.8))
+    fig, ax = plt.subplots(figsize=(FIG_W, FIG_H))
     bars = ax.bar(models, accs, color=COLORS["DoRA"], alpha=0.88,
                   edgecolor="white", width=0.45)
     for bar, v in zip(bars, accs):
@@ -143,7 +146,7 @@ def fig_scale_study():
 
 
 def fig_training_curves():
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+    fig, axes = plt.subplots(1, 2, figsize=(FIG_W * 2, FIG_H))
 
     dora_rte = _load_trainer_states("glue_rte_roberta_dora_r8")
     lora_rte = _load_trainer_states("glue_rte_roberta_lora_r8")
@@ -190,7 +193,7 @@ def fig_weight_trajectory():
         lora_stats = [{"epoch": e, "lora_norm_mean": v} for e, v in [
             (1, .203), (2, .442), (3, .491), (4, .500), (5, .500)]]
 
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=(FIG_W, FIG_H))
     for stats, label, color in [(dora_stats, "DoRA", COLORS["DoRA"]),
                                  (lora_stats, "LoRA", COLORS["LoRA"])]:
         epochs = [r["epoch"] for r in stats]
@@ -216,7 +219,7 @@ def fig_grasp_results():
     x = np.arange(len(backbones))
     width = 0.25
 
-    fig, ax = plt.subplots(figsize=(7, 4.5))
+    fig, ax = plt.subplots(figsize=(FIG_W, FIG_H))
     for i, method in enumerate(methods):
         vals = [GRASP_RESULTS[b][method] for b in backbones]
         bars = ax.bar(x + (i - 1) * width, vals, width, label=method,
