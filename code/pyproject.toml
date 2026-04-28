@@ -26,6 +26,7 @@ dependencies = [
   "shapely>=2.0.0",
   "bitsandbytes>=0.43.0",
   "timm>=0.9.10,<1.0.0",
+  "lerobot>=0.3.3",
 ]
 
 [project.optional-dependencies]

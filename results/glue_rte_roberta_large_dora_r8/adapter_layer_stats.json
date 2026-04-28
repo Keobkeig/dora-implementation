@@ -1,0 +1,434 @@
+[
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.0.attention.self.query",
+    "angle_deg": 90.8504,
+    "relative_update_norm": 0.020365
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.0.attention.self.key",
+    "angle_deg": 90.668,
+    "relative_update_norm": 0.021237
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.0.attention.self.value",
+    "angle_deg": 90.6244,
+    "relative_update_norm": 0.021276
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.1.attention.self.query",
+    "angle_deg": 90.0171,
+    "relative_update_norm": 0.01355
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.1.attention.self.key",
+    "angle_deg": 90.3212,
+    "relative_update_norm": 0.014268
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.1.attention.self.value",
+    "angle_deg": 90.7515,
+    "relative_update_norm": 0.021785
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.2.attention.self.query",
+    "angle_deg": 90.5096,
+    "relative_update_norm": 0.016291
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.2.attention.self.key",
+    "angle_deg": 90.6898,
+    "relative_update_norm": 0.016946
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.2.attention.self.value",
+    "angle_deg": 90.7539,
+    "relative_update_norm": 0.027173
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.3.attention.self.query",
+    "angle_deg": 90.5443,
+    "relative_update_norm": 0.017055
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.3.attention.self.key",
+    "angle_deg": 90.5917,
+    "relative_update_norm": 0.017132
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.3.attention.self.value",
+    "angle_deg": 90.6071,
+    "relative_update_norm": 0.020836
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.4.attention.self.query",
+    "angle_deg": 90.5145,
+    "relative_update_norm": 0.016991
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.4.attention.self.key",
+    "angle_deg": 90.9367,
+    "relative_update_norm": 0.018262
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.4.attention.self.value",
+    "angle_deg": 90.5928,
+    "relative_update_norm": 0.019535
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.5.attention.self.query",
+    "angle_deg": 90.5958,
+    "relative_update_norm": 0.01827
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.5.attention.self.key",
+    "angle_deg": 90.6411,
+    "relative_update_norm": 0.019961
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.5.attention.self.value",
+    "angle_deg": 90.8232,
+    "relative_update_norm": 0.020415
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.6.attention.self.query",
+    "angle_deg": 90.8078,
+    "relative_update_norm": 0.015947
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.6.attention.self.key",
+    "angle_deg": 90.5456,
+    "relative_update_norm": 0.016909
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.6.attention.self.value",
+    "angle_deg": 90.7103,
+    "relative_update_norm": 0.021002
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.7.attention.self.query",
+    "angle_deg": 90.6515,
+    "relative_update_norm": 0.018082
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.7.attention.self.key",
+    "angle_deg": 90.6856,
+    "relative_update_norm": 0.02
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.7.attention.self.value",
+    "angle_deg": 90.6995,
+    "relative_update_norm": 0.020475
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.8.attention.self.query",
+    "angle_deg": 90.556,
+    "relative_update_norm": 0.018641
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.8.attention.self.key",
+    "angle_deg": 90.8175,
+    "relative_update_norm": 0.020926
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.8.attention.self.value",
+    "angle_deg": 91.2382,
+    "relative_update_norm": 0.026515
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.9.attention.self.query",
+    "angle_deg": 90.7345,
+    "relative_update_norm": 0.020615
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.9.attention.self.key",
+    "angle_deg": 90.7587,
+    "relative_update_norm": 0.022098
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.9.attention.self.value",
+    "angle_deg": 90.9657,
+    "relative_update_norm": 0.024535
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.10.attention.self.query",
+    "angle_deg": 90.3356,
+    "relative_update_norm": 0.020106
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.10.attention.self.key",
+    "angle_deg": 90.6839,
+    "relative_update_norm": 0.020201
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.10.attention.self.value",
+    "angle_deg": 90.9491,
+    "relative_update_norm": 0.025914
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.11.attention.self.query",
+    "angle_deg": 90.89,
+    "relative_update_norm": 0.020945
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.11.attention.self.key",
+    "angle_deg": 90.568,
+    "relative_update_norm": 0.020399
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.11.attention.self.value",
+    "angle_deg": 90.877,
+    "relative_update_norm": 0.025434
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.12.attention.self.query",
+    "angle_deg": 90.5891,
+    "relative_update_norm": 0.023102
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.12.attention.self.key",
+    "angle_deg": 90.697,
+    "relative_update_norm": 0.022181
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.12.attention.self.value",
+    "angle_deg": 90.7145,
+    "relative_update_norm": 0.023594
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.13.attention.self.query",
+    "angle_deg": 90.5024,
+    "relative_update_norm": 0.023644
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.13.attention.self.key",
+    "angle_deg": 90.8268,
+    "relative_update_norm": 0.023793
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.13.attention.self.value",
+    "angle_deg": 90.6996,
+    "relative_update_norm": 0.023715
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.14.attention.self.query",
+    "angle_deg": 90.6587,
+    "relative_update_norm": 0.02165
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.14.attention.self.key",
+    "angle_deg": 90.7213,
+    "relative_update_norm": 0.023264
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.14.attention.self.value",
+    "angle_deg": 90.5333,
+    "relative_update_norm": 0.019118
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.15.attention.self.query",
+    "angle_deg": 90.5466,
+    "relative_update_norm": 0.024022
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.15.attention.self.key",
+    "angle_deg": 90.674,
+    "relative_update_norm": 0.024674
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.15.attention.self.value",
+    "angle_deg": 90.574,
+    "relative_update_norm": 0.020644
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.16.attention.self.query",
+    "angle_deg": 90.7276,
+    "relative_update_norm": 0.030086
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.16.attention.self.key",
+    "angle_deg": 90.8467,
+    "relative_update_norm": 0.026576
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.16.attention.self.value",
+    "angle_deg": 90.9355,
+    "relative_update_norm": 0.02264
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.17.attention.self.query",
+    "angle_deg": 90.9981,
+    "relative_update_norm": 0.030665
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.17.attention.self.key",
+    "angle_deg": 90.6147,
+    "relative_update_norm": 0.025167
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.17.attention.self.value",
+    "angle_deg": 90.8391,
+    "relative_update_norm": 0.02211
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.18.attention.self.query",
+    "angle_deg": 90.7995,
+    "relative_update_norm": 0.026036
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.18.attention.self.key",
+    "angle_deg": 90.5247,
+    "relative_update_norm": 0.023398
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.18.attention.self.value",
+    "angle_deg": 90.4652,
+    "relative_update_norm": 0.017608
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.19.attention.self.query",
+    "angle_deg": 90.6479,
+    "relative_update_norm": 0.022495
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.19.attention.self.key",
+    "angle_deg": 90.4313,
+    "relative_update_norm": 0.021999
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.19.attention.self.value",
+    "angle_deg": 90.6324,
+    "relative_update_norm": 0.017742
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.20.attention.self.query",
+    "angle_deg": 90.5976,
+    "relative_update_norm": 0.024679
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.20.attention.self.key",
+    "angle_deg": 90.6839,
+    "relative_update_norm": 0.021307
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.20.attention.self.value",
+    "angle_deg": 90.4559,
+    "relative_update_norm": 0.020685
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.21.attention.self.query",
+    "angle_deg": 90.7373,
+    "relative_update_norm": 0.02255
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.21.attention.self.key",
+    "angle_deg": 90.9058,
+    "relative_update_norm": 0.023961
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.21.attention.self.value",
+    "angle_deg": 90.6037,
+    "relative_update_norm": 0.020514
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.22.attention.self.query",
+    "angle_deg": 90.7015,
+    "relative_update_norm": 0.022402
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.22.attention.self.key",
+    "angle_deg": 90.6223,
+    "relative_update_norm": 0.020693
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.22.attention.self.value",
+    "angle_deg": 90.3235,
+    "relative_update_norm": 0.020029
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.23.attention.self.query",
+    "angle_deg": 90.6821,
+    "relative_update_norm": 0.024783
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.23.attention.self.key",
+    "angle_deg": 90.8982,
+    "relative_update_norm": 0.022331
+  },
+  {
+    "method": "dora",
+    "layer": "roberta.encoder.layer.23.attention.self.value",
+    "angle_deg": 90.635,
+    "relative_update_norm": 0.015603
+  }
+]

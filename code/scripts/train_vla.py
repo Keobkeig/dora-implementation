@@ -1,0 +1,415 @@
+#!/usr/bin/env python3
+"""
+Fine-tune SmolVLM-256M on the LeRobot Push-T manipulation task.
+
+A small VLA (Vision-Language-Action) model: takes an RGB observation + the
+language instruction "Push the T-shaped block onto the T-shaped target."
+and predicts the next 2-D action (x, y).
+
+Compares DoRA vs LoRA vs full fine-tuning. Trainable parameters are reported
+for each method. The action head is always trainable.
+
+Usage:
+    uv run scripts/train_vla.py --method dora --bf16
+    uv run scripts/train_vla.py --method lora --bf16
+    uv run scripts/train_vla.py --method full --bf16
+"""
+
+from typing import Optional
+import argparse
+import json
+import logging
+import math
+import os
+import sys
+
+import numpy as np
+import torch
+import torch.nn as nn
+from transformers import (
+    AutoModel,
+    AutoProcessor,
+    EvalPrediction,
+    Trainer,
+    TrainerCallback,
+    TrainingArguments,
+    set_seed,
+)
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from dora.models.llama import apply_dora_to_model
+from dora.layers.lora_linear import apply_lora_to_model
+from dora.data.lerobot_dataset import load_pusht, SMOLVLM_MODEL_ID
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
+
+# SmolVLM uses LLaMA-style attention naming
+SMOLVLM_TARGET_MODULES = ["q_proj", "k_proj", "v_proj"]
+ACTION_DIM = 2  # pusht actions are (x, y)
+
+
+# ---------------------------------------------------------------------------
+# Model
+# ---------------------------------------------------------------------------
+
+class SmolVLMActionModel(nn.Module):
+    """
+    SmolVLM (vision + language) backbone + lightweight 2-D action regression head.
+
+    Architecture:
+        SmolVLM   → last_hidden_state[:, -1, :]   (last-token feature, dim=576)
+        action_head: Linear(576 → 256) → GELU → Dropout → Linear(256 → 2)
+    """
+
+    def __init__(self, model_name: str = SMOLVLM_MODEL_ID, dtype=torch.float32):
+        super().__init__()
+        self.vlm = AutoModel.from_pretrained(
+            model_name, torch_dtype=dtype, ignore_mismatched_sizes=True
+        )
+        hidden = self.vlm.config.text_config.hidden_size  # 576 for SmolVLM-256M
+        self.action_head = nn.Sequential(
+            nn.Linear(hidden, 256),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            nn.Linear(256, ACTION_DIM),
+        )
+        self.loss_fn = nn.SmoothL1Loss()
+
+    def forward(
+        self,
+        pixel_values: torch.Tensor,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        labels: Optional[torch.Tensor] = None,
+        **kwargs,
+    ) -> dict:
+        out = self.vlm(
+            pixel_values=pixel_values,
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+        )
+        # Use last-token hidden state as the policy feature
+        features = out.last_hidden_state[:, -1, :]
+        actions = self.action_head(features.float())
+        loss = self.loss_fn(actions, labels) if labels is not None else None
+        return {"loss": loss, "logits": actions}
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def freeze_base_weights(model: SmolVLMActionModel):
+    """Keep only adapter params + action_head trainable."""
+    for name, param in model.named_parameters():
+        leaf = name.split(".")[-1]
+        is_adapter = leaf in ("lora_A", "lora_B", "magnitude")
+        is_head = name.startswith("action_head")
+        param.requires_grad = is_adapter or is_head
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    total     = sum(p.numel() for p in model.parameters())
+    logger.info(f"Trainable: {trainable:,} / {total:,} ({100 * trainable / total:.3f}%)")
+
+
+def build_compute_metrics():
+    """Mean L1 error in normalised action space (lower is better)."""
+    def compute_metrics(p: EvalPrediction) -> dict:
+        preds  = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
+        labels = p.label_ids
+        l1 = float(np.abs(np.array(preds) - np.array(labels)).mean())
+        return {"action_l1_error": l1}
+    return compute_metrics
+
+
+# ---------------------------------------------------------------------------
+# Adapter stats callback (per-epoch weight tracking, same as train_glue.py)
+# ---------------------------------------------------------------------------
+
+class AdapterStatsCallback(TrainerCallback):
+    def __init__(self, model, output_dir, primary_metric="action_l1_error"):
+        self.model = model
+        self.output_dir = output_dir
+        self.primary_metric = primary_metric
+        self.records = []
+        self._last_train_loss = float("nan")
+        self._init_mag_norms = {}
+
+    def on_train_begin(self, args, state, control, **kwargs):
+        for name, m in self.model.named_modules():
+            if hasattr(m, "magnitude") and hasattr(m, "lora_A"):
+                with torch.no_grad():
+                    self._init_mag_norms[name] = m.magnitude.float().norm().item()
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        if logs and "loss" in logs:
+            self._last_train_loss = float(logs["loss"])
+
+    def on_evaluate(self, args, state, control, metrics=None, **kwargs):
+        epoch = state.epoch or 0.0
+        eval_metric = float(metrics.get(f"eval_{self.primary_metric}", float("nan")))
+        eval_loss   = float(metrics.get("eval_loss", float("nan")))
+
+        lora_norms, mag_drifts, mag_means = [], [], []
+        for name, m in self.model.named_modules():
+            if hasattr(m, "lora_A") and hasattr(m, "lora_B"):
+                with torch.no_grad():
+                    delta = m.lora_B.float() @ m.lora_A.float()
+                    lora_norms.append(delta.norm().item())
+                    if hasattr(m, "magnitude"):
+                        mag = m.magnitude.float()
+                        mag_means.append(mag.mean().item())
+                        init_n = self._init_mag_norms.get(name)
+                        if init_n and init_n > 0:
+                            mag_drifts.append(abs(mag.norm().item() - init_n) / init_n)
+
+        self.records.append({
+            "epoch":               round(epoch, 2),
+            "eval_metric":         round(eval_metric, 6),
+            "eval_loss":           round(eval_loss, 6),
+            "train_loss":          round(self._last_train_loss, 6),
+            "lora_norm_mean":      round(float(np.mean(lora_norms)), 6) if lora_norms else None,
+            "magnitude_rel_drift": round(float(np.mean(mag_drifts)), 6) if mag_drifts else None,
+            "magnitude_mean":      round(float(np.mean(mag_means)), 6) if mag_means else None,
+            "n_adapter_layers":    len(lora_norms),
+        })
+
+    def _per_layer_stats(self) -> list:
+        """One row per adapted layer: method, layer, angle_deg, relative_update_norm."""
+        rows = []
+        for name, module in self.model.named_modules():
+            if not (hasattr(module, "lora_A") and hasattr(module, "lora_B")
+                    and hasattr(module, "base_weight")
+                    and hasattr(module, "get_effective_weight")):
+                continue
+            method_name = "dora" if hasattr(module, "magnitude") else "lora"
+            with torch.no_grad():
+                W0 = module.base_weight.detach().float()
+                W_eff = module.get_effective_weight().detach().float()
+                dW = W_eff - W0
+                w0 = W0.flatten()
+                dw = dW.flatten()
+                w0_norm = float(torch.linalg.norm(w0).item())
+                dw_norm = float(torch.linalg.norm(dw).item())
+                if w0_norm > 0 and dw_norm > 0:
+                    cos = float((torch.dot(w0, dw) / (w0_norm * dw_norm)).clamp(-1.0, 1.0).item())
+                    angle_deg = math.degrees(math.acos(cos))
+                else:
+                    angle_deg = float("nan")
+                rel = dw_norm / w0_norm if w0_norm > 0 else float("nan")
+            rows.append({
+                "method": method_name,
+                "layer": name,
+                "angle_deg": round(angle_deg, 4),
+                "relative_update_norm": round(rel, 6),
+            })
+        return rows
+
+    def on_train_end(self, args, state, control, **kwargs):
+        out_path = os.path.join(self.output_dir, "adapter_stats.json")
+        with open(out_path, "w") as f:
+            json.dump(self.records, f, indent=2)
+        logger.info(f"Adapter stats saved → {out_path}  ({len(self.records)} epochs)")
+
+        layer_rows = self._per_layer_stats()
+        if layer_rows:
+            layer_path = os.path.join(self.output_dir, "adapter_layer_stats.json")
+            with open(layer_path, "w") as f:
+                json.dump(layer_rows, f, indent=2)
+            logger.info(f"Per-layer adapter stats → {layer_path}  ({len(layer_rows)} layers)")
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+def parse_args():
+    p = argparse.ArgumentParser(description="DoRA / LoRA / full FT on SmolVLM Push-T VLA")
+
+    p.add_argument("--method", choices=["dora", "lora", "full"], default="dora")
+    p.add_argument("--rank",    type=int,   default=8)
+    p.add_argument("--alpha",   type=float, default=16.0)
+    p.add_argument("--dropout", type=float, default=0.05)
+    p.add_argument("--target_modules", nargs="+", default=SMOLVLM_TARGET_MODULES)
+
+    # Training — small batch + grad accum for VLM memory
+    p.add_argument("--epochs",       type=int,   default=3)
+    p.add_argument("--batch_size",   type=int,   default=4)
+    p.add_argument("--grad_accum",   type=int,   default=8)
+    p.add_argument("--lr",           type=float, default=1e-4)
+    p.add_argument("--weight_decay", type=float, default=0.01)
+    p.add_argument("--warmup_ratio", type=float, default=0.05)
+    p.add_argument("--seed",         type=int,   default=42)
+    p.add_argument("--val_split",    type=float, default=0.2)
+    p.add_argument("--output_dir",   default=None)
+    p.add_argument("--max_train_samples", type=int, default=None,
+                   help="If set, subsample training set for faster iteration")
+
+    p.add_argument("--bf16",  action="store_true")
+    p.add_argument("--fp16",  action="store_true")
+    p.add_argument("--wandb", action="store_true")
+
+    return p.parse_args()
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+def main():
+    args = parse_args()
+    set_seed(args.seed)
+
+    if args.output_dir is None:
+        run_tag = f"{args.method}_r{args.rank}" if args.method != "full" else "full"
+        args.output_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "..", "results", f"vla_pusht_{run_tag}",
+        )
+    os.makedirs(args.output_dir, exist_ok=True)
+
+    logger.info(f"Method: {args.method} | rank={args.rank} | target={args.target_modules}")
+
+    # ------------------------------------------------------------------
+    # Processor + dataset
+    # ------------------------------------------------------------------
+    processor = AutoProcessor.from_pretrained(SMOLVLM_MODEL_ID, do_image_splitting=False)
+    dtype = torch.bfloat16 if args.bf16 else torch.float16 if args.fp16 else torch.float32
+    train_ds, eval_ds = load_pusht(processor=processor, val_split=args.val_split,
+                                   seed=args.seed, dtype=dtype)
+
+    if args.max_train_samples and args.max_train_samples < len(train_ds):
+        from torch.utils.data import Subset
+        train_ds = Subset(train_ds, list(range(args.max_train_samples)))
+        logger.info(f"Subsampled train → {len(train_ds)} frames")
+
+    logger.info(f"Train: {len(train_ds)}  Val: {len(eval_ds)}")
+
+    # ------------------------------------------------------------------
+    # Model
+    # ------------------------------------------------------------------
+    model = SmolVLMActionModel(model_name=SMOLVLM_MODEL_ID, dtype=dtype)
+
+    # ------------------------------------------------------------------
+    # Apply adapter
+    # ------------------------------------------------------------------
+    if args.method == "dora":
+        apply_dora_to_model(model.vlm, target_modules=args.target_modules,
+                            rank=args.rank, alpha=args.alpha, dropout=args.dropout)
+        freeze_base_weights(model)
+    elif args.method == "lora":
+        apply_lora_to_model(model.vlm, target_modules=args.target_modules,
+                            rank=args.rank, alpha=args.alpha, dropout=args.dropout)
+        freeze_base_weights(model)
+    else:
+        for param in model.parameters():
+            param.requires_grad = True
+        if args.lr == 1e-4:
+            args.lr = 2e-5
+            logger.info(f"Full FT: auto-setting lr={args.lr}")
+
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    total     = sum(p.numel() for p in model.parameters())
+    logger.info(f"[{args.method.upper()}] Trainable: {trainable:,} / {total:,} "
+                f"({100 * trainable / total:.3f}%)")
+
+    # ------------------------------------------------------------------
+    # Custom collator — pads sequences to the longest in the batch
+    # ------------------------------------------------------------------
+    def vla_collator(batch):
+        # Pad input_ids and attention_mask to the longest sequence
+        max_len = max(b["input_ids"].size(0) for b in batch)
+        pad_id = processor.tokenizer.pad_token_id or 0
+
+        out = {
+            "pixel_values":   torch.stack([b["pixel_values"]   for b in batch]),
+            "input_ids":      torch.stack([
+                torch.cat([b["input_ids"], torch.full((max_len - b["input_ids"].size(0),), pad_id, dtype=b["input_ids"].dtype)])
+                for b in batch
+            ]),
+            "attention_mask": torch.stack([
+                torch.cat([b["attention_mask"], torch.zeros(max_len - b["attention_mask"].size(0), dtype=b["attention_mask"].dtype)])
+                for b in batch
+            ]),
+            "labels":         torch.stack([b["labels"] for b in batch]),
+        }
+        return out
+
+    # ------------------------------------------------------------------
+    # Trainer
+    # ------------------------------------------------------------------
+    steps_per_epoch = math.ceil(len(train_ds) / (args.batch_size * args.grad_accum))
+    warmup_steps    = max(1, int(args.warmup_ratio * steps_per_epoch * args.epochs))
+
+    try:
+        import wandb as _w; _wandb_ok = True  # noqa: E702
+    except ImportError:
+        _wandb_ok = False
+
+    training_args = TrainingArguments(
+        output_dir=args.output_dir,
+        num_train_epochs=args.epochs,
+        per_device_train_batch_size=args.batch_size,
+        per_device_eval_batch_size=args.batch_size,
+        gradient_accumulation_steps=args.grad_accum,
+        learning_rate=args.lr,
+        weight_decay=args.weight_decay,
+        warmup_steps=warmup_steps,
+        lr_scheduler_type="cosine",
+        eval_strategy="epoch",
+        save_strategy="epoch",
+        save_total_limit=1,
+        load_best_model_at_end=True,
+        metric_for_best_model="action_l1_error",
+        greater_is_better=False,  # lower L1 error is better
+        fp16=args.fp16,
+        bf16=args.bf16,
+        report_to="wandb" if (args.wandb and _wandb_ok) else "none",
+        run_name=f"vla_pusht_{args.method}_r{args.rank}",
+        logging_steps=20,
+        seed=args.seed,
+        dataloader_num_workers=0,        # data loading is CPU-bound on processor calls
+        remove_unused_columns=False,
+    )
+
+    stats_cb = AdapterStatsCallback(model, args.output_dir)
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_ds,
+        eval_dataset=eval_ds,
+        data_collator=vla_collator,
+        compute_metrics=build_compute_metrics(),
+        callbacks=[stats_cb] if args.method in ("dora", "lora") else [],
+    )
+
+    logger.info("Training...")
+    trainer.train()
+
+    results = trainer.evaluate()
+    logger.info(f"Final results: {results}")
+
+    # ------------------------------------------------------------------
+    # Save adapter
+    # ------------------------------------------------------------------
+    if args.method == "dora":
+        from dora.layers.base import DoRAStateManager
+        DoRAStateManager.save_dora_state(
+            model.vlm, os.path.join(args.output_dir, "dora_adapter.pt"),
+            include_base_weights=False,
+        )
+    elif args.method == "lora":
+        from dora.layers.lora_linear import LoRALinear
+        lora_state = {n: {"lora_A": m.lora_A.data, "lora_B": m.lora_B.data}
+                      for n, m in model.named_modules() if isinstance(m, LoRALinear)}
+        torch.save({"lora_state": lora_state},
+                   os.path.join(args.output_dir, "lora_adapter.pt"))
+
+    torch.save(model.action_head.state_dict(),
+               os.path.join(args.output_dir, "action_head.pt"))
+    return results
+
+
+if __name__ == "__main__":
+    main()

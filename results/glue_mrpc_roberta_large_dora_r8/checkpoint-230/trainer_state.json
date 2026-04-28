@@ -1,0 +1,73 @@
+{
+  "best_global_step": 230,
+  "best_metric": 0.8061624649859944,
+  "best_model_checkpoint": "C:\\Users\\Owner\\Documents\\dora-implementation\\code\\..\\results\\glue_mrpc_roberta_large_dora_r8\\checkpoint-230",
+  "epoch": 1.0,
+  "eval_steps": 500,
+  "global_step": 230,
+  "is_hyper_param_search": false,
+  "is_local_process_zero": true,
+  "is_world_process_zero": true,
+  "log_history": [
+    {
+      "epoch": 0.21739130434782608,
+      "grad_norm": 1.8203125,
+      "learning_rate": 0.00014202898550724638,
+      "loss": 0.6784710693359375,
+      "step": 50
+    },
+    {
+      "epoch": 0.43478260869565216,
+      "grad_norm": 5.46875,
+      "learning_rate": 0.00019962017307137227,
+      "loss": 0.661409912109375,
+      "step": 100
+    },
+    {
+      "epoch": 0.6521739130434783,
+      "grad_norm": 6.6875,
+      "learning_rate": 0.00019730944934998862,
+      "loss": 0.6127220153808594,
+      "step": 150
+    },
+    {
+      "epoch": 0.8695652173913043,
+      "grad_norm": 3.109375,
+      "learning_rate": 0.00019294766227991413,
+      "loss": 0.6218404388427734,
+      "step": 200
+    },
+    {
+      "epoch": 1.0,
+      "eval_accuracy": 0.7647058823529411,
+      "eval_combined": 0.8061624649859944,
+      "eval_f1": 0.8476190476190476,
+      "eval_loss": 0.4814070165157318,
+      "eval_runtime": 14.0301,
+      "eval_samples_per_second": 29.08,
+      "eval_steps_per_second": 0.927,
+      "step": 230
+    }
+  ],
+  "logging_steps": 50,
+  "max_steps": 1150,
+  "num_input_tokens_seen": 0,
+  "num_train_epochs": 5,
+  "save_steps": 500,
+  "stateful_callbacks": {
+    "TrainerControl": {
+      "args": {
+        "should_epoch_stop": false,
+        "should_evaluate": false,
+        "should_log": false,
+        "should_save": true,
+        "should_training_stop": false
+      },
+      "attributes": {}
+    }
+  },
+  "total_flos": 385081868472000.0,
+  "train_batch_size": 16,
+  "trial_name": null,
+  "trial_params": null
+}

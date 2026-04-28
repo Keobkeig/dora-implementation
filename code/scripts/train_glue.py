@@ -25,6 +25,7 @@ Usage:
 import argparse
 import json
 import logging
+import math
 import os
 import sys
 
@@ -122,7 +123,8 @@ MODEL_PRESETS = {
     "1b": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",   # LLaMA arch, fully open
     "3b": "openlm-research/open_llama_3b",          # LLaMA arch, fully open
     "7b": "huggyllama/llama-7b",                    # LLaMA arch, fully open
-    "roberta": "FacebookAI/roberta-base",            # RoBERTa-base (~125M params)
+    "roberta":       "FacebookAI/roberta-base",     # RoBERTa-base  (~125M params)
+    "roberta_large": "FacebookAI/roberta-large",    # RoBERTa-large (~355M params)
 }
 
 # Architecture-specific target modules (attention projections only)
@@ -283,11 +285,58 @@ class AdapterStatsCallback(TrainerCallback):
         }
         self.records.append(record)
 
+    def _per_layer_stats(self) -> list:
+        """
+        One row per adapted layer with the values needed for a polar scatter:
+            method, layer, angle_deg, relative_update_norm
+
+        angle_deg               = arccos(<W0, ΔW>_F / (||W0||_F · ||ΔW||_F))
+        relative_update_norm    = ||ΔW||_F / ||W0||_F
+        ΔW                      = W_eff - W0   (uses the layer's own
+                                                get_effective_weight, so DoRA
+                                                magnitude + scaling are baked in)
+        """
+        rows = []
+        for name, module in self.model.named_modules():
+            if not (hasattr(module, "lora_A") and hasattr(module, "lora_B")
+                    and hasattr(module, "base_weight")
+                    and hasattr(module, "get_effective_weight")):
+                continue
+            method_name = "dora" if hasattr(module, "magnitude") else "lora"
+            with torch.no_grad():
+                W0 = module.base_weight.detach().float()
+                W_eff = module.get_effective_weight().detach().float()
+                dW = W_eff - W0
+                w0 = W0.flatten()
+                dw = dW.flatten()
+                w0_norm = float(torch.linalg.norm(w0).item())
+                dw_norm = float(torch.linalg.norm(dw).item())
+                if w0_norm > 0 and dw_norm > 0:
+                    cos = float((torch.dot(w0, dw) / (w0_norm * dw_norm)).clamp(-1.0, 1.0).item())
+                    angle_deg = math.degrees(math.acos(cos))
+                else:
+                    angle_deg = float("nan")
+                rel = dw_norm / w0_norm if w0_norm > 0 else float("nan")
+            rows.append({
+                "method": method_name,
+                "layer": name,
+                "angle_deg": round(angle_deg, 4),
+                "relative_update_norm": round(rel, 6),
+            })
+        return rows
+
     def on_train_end(self, args, state, control, **kwargs):
         out_path = os.path.join(self.output_dir, "adapter_stats.json")
         with open(out_path, "w") as f:
             json.dump(self.records, f, indent=2)
         logger.info(f"Adapter stats saved → {out_path}  ({len(self.records)} epochs)")
+
+        layer_rows = self._per_layer_stats()
+        if layer_rows:
+            layer_path = os.path.join(self.output_dir, "adapter_layer_stats.json")
+            with open(layer_path, "w") as f:
+                json.dump(layer_rows, f, indent=2)
+            logger.info(f"Per-layer adapter stats → {layer_path}  ({len(layer_rows)} layers)")
 
 
 # ---------------------------------------------------------------------------
@@ -468,7 +517,6 @@ def main():
     # ------------------------------------------------------------------
     # Trainer
     # ------------------------------------------------------------------
-    import math
     steps_per_epoch = math.ceil(len(train_ds) / (args.batch_size * args.grad_accum))
     total_steps = steps_per_epoch * args.epochs
     warmup_steps = max(1, int(args.warmup_ratio * total_steps))

@@ -12,7 +12,10 @@
       "Bash(echo \"PID: $!\")",
       "Bash(grep -v \"^$\")",
       "Bash(git ls-tree *)",
-      "Bash(awk '{print $1}')"
+      "Bash(awk '{print $1}')",
+      "WebSearch",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('scripts/train_glue.py'\\).read\\(\\)\\); ast.parse\\(open\\('scripts/train_vla.py'\\).read\\(\\)\\); print\\('OK both parse'\\)\")",
+      "PowerShell(uv run *)"
     ]
   }
 }
