@@ -1,0 +1,758 @@
+[
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.0.self_attn.k_proj",
+    "angle_deg": 90.8383,
+    "relative_update_norm": 0.031889
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.0.self_attn.v_proj",
+    "angle_deg": 92.3653,
+    "relative_update_norm": 0.079141
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.0.self_attn.q_proj",
+    "angle_deg": 90.8456,
+    "relative_update_norm": 0.034476
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.1.self_attn.k_proj",
+    "angle_deg": 91.2704,
+    "relative_update_norm": 0.040577
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.1.self_attn.v_proj",
+    "angle_deg": 92.2207,
+    "relative_update_norm": 0.075019
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.1.self_attn.q_proj",
+    "angle_deg": 91.3414,
+    "relative_update_norm": 0.0412
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.2.self_attn.k_proj",
+    "angle_deg": 91.282,
+    "relative_update_norm": 0.04211
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.2.self_attn.v_proj",
+    "angle_deg": 91.9031,
+    "relative_update_norm": 0.064132
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.2.self_attn.q_proj",
+    "angle_deg": 91.2026,
+    "relative_update_norm": 0.042841
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.3.self_attn.k_proj",
+    "angle_deg": 91.4737,
+    "relative_update_norm": 0.04761
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.3.self_attn.v_proj",
+    "angle_deg": 91.6742,
+    "relative_update_norm": 0.059669
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.3.self_attn.q_proj",
+    "angle_deg": 91.1777,
+    "relative_update_norm": 0.04642
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.4.self_attn.k_proj",
+    "angle_deg": 91.6236,
+    "relative_update_norm": 0.052797
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.4.self_attn.v_proj",
+    "angle_deg": 91.7412,
+    "relative_update_norm": 0.063637
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.4.self_attn.q_proj",
+    "angle_deg": 91.4223,
+    "relative_update_norm": 0.047745
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.5.self_attn.k_proj",
+    "angle_deg": 91.7725,
+    "relative_update_norm": 0.053765
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.5.self_attn.v_proj",
+    "angle_deg": 91.5561,
+    "relative_update_norm": 0.055913
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.5.self_attn.q_proj",
+    "angle_deg": 91.2892,
+    "relative_update_norm": 0.046031
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.6.self_attn.k_proj",
+    "angle_deg": 91.2413,
+    "relative_update_norm": 0.047106
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.6.self_attn.v_proj",
+    "angle_deg": 91.3824,
+    "relative_update_norm": 0.051009
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.6.self_attn.q_proj",
+    "angle_deg": 91.4389,
+    "relative_update_norm": 0.046273
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.7.self_attn.k_proj",
+    "angle_deg": 91.1942,
+    "relative_update_norm": 0.043512
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.7.self_attn.v_proj",
+    "angle_deg": 91.3607,
+    "relative_update_norm": 0.046906
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.7.self_attn.q_proj",
+    "angle_deg": 91.5274,
+    "relative_update_norm": 0.049076
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.8.self_attn.k_proj",
+    "angle_deg": 90.8447,
+    "relative_update_norm": 0.038236
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.8.self_attn.v_proj",
+    "angle_deg": 91.4491,
+    "relative_update_norm": 0.05005
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.8.self_attn.q_proj",
+    "angle_deg": 90.934,
+    "relative_update_norm": 0.041274
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.9.self_attn.k_proj",
+    "angle_deg": 90.8888,
+    "relative_update_norm": 0.036571
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.9.self_attn.v_proj",
+    "angle_deg": 91.5076,
+    "relative_update_norm": 0.051309
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.9.self_attn.q_proj",
+    "angle_deg": 91.0295,
+    "relative_update_norm": 0.040653
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.10.self_attn.k_proj",
+    "angle_deg": 91.0224,
+    "relative_update_norm": 0.041164
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.10.self_attn.v_proj",
+    "angle_deg": 91.6563,
+    "relative_update_norm": 0.053562
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.10.self_attn.q_proj",
+    "angle_deg": 91.0707,
+    "relative_update_norm": 0.043795
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.11.self_attn.k_proj",
+    "angle_deg": 91.3851,
+    "relative_update_norm": 0.042278
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.11.self_attn.v_proj",
+    "angle_deg": 91.6994,
+    "relative_update_norm": 0.057088
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.vision_model.encoder.layers.11.self_attn.q_proj",
+    "angle_deg": 91.2874,
+    "relative_update_norm": 0.045626
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.0.self_attn.q_proj",
+    "angle_deg": 90.7014,
+    "relative_update_norm": 0.005534
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.0.self_attn.k_proj",
+    "angle_deg": 89.1726,
+    "relative_update_norm": 0.004183
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.0.self_attn.v_proj",
+    "angle_deg": 90.8402,
+    "relative_update_norm": 0.027881
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.1.self_attn.q_proj",
+    "angle_deg": 91.0466,
+    "relative_update_norm": 0.005804
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.1.self_attn.k_proj",
+    "angle_deg": 91.1782,
+    "relative_update_norm": 0.005325
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.1.self_attn.v_proj",
+    "angle_deg": 90.1706,
+    "relative_update_norm": 0.009735
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.2.self_attn.q_proj",
+    "angle_deg": 90.2648,
+    "relative_update_norm": 0.0057
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.2.self_attn.k_proj",
+    "angle_deg": 89.1315,
+    "relative_update_norm": 0.004883
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.2.self_attn.v_proj",
+    "angle_deg": 90.388,
+    "relative_update_norm": 0.010215
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.3.self_attn.q_proj",
+    "angle_deg": 90.4634,
+    "relative_update_norm": 0.006572
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.3.self_attn.k_proj",
+    "angle_deg": 89.8947,
+    "relative_update_norm": 0.005366
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.3.self_attn.v_proj",
+    "angle_deg": 89.4463,
+    "relative_update_norm": 0.008693
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.4.self_attn.q_proj",
+    "angle_deg": 89.6035,
+    "relative_update_norm": 0.007401
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.4.self_attn.k_proj",
+    "angle_deg": 89.4365,
+    "relative_update_norm": 0.005855
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.4.self_attn.v_proj",
+    "angle_deg": 89.4999,
+    "relative_update_norm": 0.008734
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.5.self_attn.q_proj",
+    "angle_deg": 91.4272,
+    "relative_update_norm": 0.00632
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.5.self_attn.k_proj",
+    "angle_deg": 90.2634,
+    "relative_update_norm": 0.005688
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.5.self_attn.v_proj",
+    "angle_deg": 91.0487,
+    "relative_update_norm": 0.008553
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.6.self_attn.q_proj",
+    "angle_deg": 90.3615,
+    "relative_update_norm": 0.006416
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.6.self_attn.k_proj",
+    "angle_deg": 91.2853,
+    "relative_update_norm": 0.005421
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.6.self_attn.v_proj",
+    "angle_deg": 88.7054,
+    "relative_update_norm": 0.008984
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.7.self_attn.q_proj",
+    "angle_deg": 90.3689,
+    "relative_update_norm": 0.006424
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.7.self_attn.k_proj",
+    "angle_deg": 90.059,
+    "relative_update_norm": 0.007814
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.7.self_attn.v_proj",
+    "angle_deg": 89.6624,
+    "relative_update_norm": 0.008836
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.8.self_attn.q_proj",
+    "angle_deg": 90.318,
+    "relative_update_norm": 0.006572
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.8.self_attn.k_proj",
+    "angle_deg": 90.7634,
+    "relative_update_norm": 0.006389
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.8.self_attn.v_proj",
+    "angle_deg": 90.8131,
+    "relative_update_norm": 0.010253
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.9.self_attn.q_proj",
+    "angle_deg": 89.9506,
+    "relative_update_norm": 0.005932
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.9.self_attn.k_proj",
+    "angle_deg": 89.8833,
+    "relative_update_norm": 0.005369
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.9.self_attn.v_proj",
+    "angle_deg": 90.1167,
+    "relative_update_norm": 0.01064
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.10.self_attn.q_proj",
+    "angle_deg": 90.3811,
+    "relative_update_norm": 0.00807
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.10.self_attn.k_proj",
+    "angle_deg": 90.6119,
+    "relative_update_norm": 0.006959
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.10.self_attn.v_proj",
+    "angle_deg": 90.889,
+    "relative_update_norm": 0.009494
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.11.self_attn.q_proj",
+    "angle_deg": 91.0433,
+    "relative_update_norm": 0.007044
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.11.self_attn.k_proj",
+    "angle_deg": 90.7139,
+    "relative_update_norm": 0.006032
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.11.self_attn.v_proj",
+    "angle_deg": 90.1689,
+    "relative_update_norm": 0.009795
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.12.self_attn.q_proj",
+    "angle_deg": 90.6783,
+    "relative_update_norm": 0.005509
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.12.self_attn.k_proj",
+    "angle_deg": 90.7612,
+    "relative_update_norm": 0.005755
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.12.self_attn.v_proj",
+    "angle_deg": 89.8221,
+    "relative_update_norm": 0.009202
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.13.self_attn.q_proj",
+    "angle_deg": 89.9258,
+    "relative_update_norm": 0.006839
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.13.self_attn.k_proj",
+    "angle_deg": 91.0168,
+    "relative_update_norm": 0.006315
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.13.self_attn.v_proj",
+    "angle_deg": 90.2497,
+    "relative_update_norm": 0.010192
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.14.self_attn.q_proj",
+    "angle_deg": 90.4163,
+    "relative_update_norm": 0.007756
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.14.self_attn.k_proj",
+    "angle_deg": 90.5211,
+    "relative_update_norm": 0.006381
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.14.self_attn.v_proj",
+    "angle_deg": 89.1607,
+    "relative_update_norm": 0.008034
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.15.self_attn.q_proj",
+    "angle_deg": 89.9672,
+    "relative_update_norm": 0.007898
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.15.self_attn.k_proj",
+    "angle_deg": 90.5431,
+    "relative_update_norm": 0.007354
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.15.self_attn.v_proj",
+    "angle_deg": 89.3369,
+    "relative_update_norm": 0.009243
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.16.self_attn.q_proj",
+    "angle_deg": 90.8187,
+    "relative_update_norm": 0.009193
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.16.self_attn.k_proj",
+    "angle_deg": 90.2434,
+    "relative_update_norm": 0.007273
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.16.self_attn.v_proj",
+    "angle_deg": 90.4532,
+    "relative_update_norm": 0.008464
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.17.self_attn.q_proj",
+    "angle_deg": 89.7595,
+    "relative_update_norm": 0.008231
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.17.self_attn.k_proj",
+    "angle_deg": 90.9045,
+    "relative_update_norm": 0.007811
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.17.self_attn.v_proj",
+    "angle_deg": 89.9661,
+    "relative_update_norm": 0.009094
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.18.self_attn.q_proj",
+    "angle_deg": 90.449,
+    "relative_update_norm": 0.011202
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.18.self_attn.k_proj",
+    "angle_deg": 89.9216,
+    "relative_update_norm": 0.010505
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.18.self_attn.v_proj",
+    "angle_deg": 89.8526,
+    "relative_update_norm": 0.009904
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.19.self_attn.q_proj",
+    "angle_deg": 89.7127,
+    "relative_update_norm": 0.008737
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.19.self_attn.k_proj",
+    "angle_deg": 89.4104,
+    "relative_update_norm": 0.009248
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.19.self_attn.v_proj",
+    "angle_deg": 90.1442,
+    "relative_update_norm": 0.008128
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.20.self_attn.q_proj",
+    "angle_deg": 90.2633,
+    "relative_update_norm": 0.013002
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.20.self_attn.k_proj",
+    "angle_deg": 90.6171,
+    "relative_update_norm": 0.011103
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.20.self_attn.v_proj",
+    "angle_deg": 89.4233,
+    "relative_update_norm": 0.010904
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.21.self_attn.q_proj",
+    "angle_deg": 91.1174,
+    "relative_update_norm": 0.012084
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.21.self_attn.k_proj",
+    "angle_deg": 91.2094,
+    "relative_update_norm": 0.010834
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.21.self_attn.v_proj",
+    "angle_deg": 89.9198,
+    "relative_update_norm": 0.011826
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.22.self_attn.q_proj",
+    "angle_deg": 90.8832,
+    "relative_update_norm": 0.012463
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.22.self_attn.k_proj",
+    "angle_deg": 91.2548,
+    "relative_update_norm": 0.012633
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.22.self_attn.v_proj",
+    "angle_deg": 90.0397,
+    "relative_update_norm": 0.013036
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.23.self_attn.q_proj",
+    "angle_deg": 90.4447,
+    "relative_update_norm": 0.012498
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.23.self_attn.k_proj",
+    "angle_deg": 90.9201,
+    "relative_update_norm": 0.011198
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.23.self_attn.v_proj",
+    "angle_deg": 90.9362,
+    "relative_update_norm": 0.016475
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.24.self_attn.q_proj",
+    "angle_deg": 90.3747,
+    "relative_update_norm": 0.015473
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.24.self_attn.k_proj",
+    "angle_deg": 90.4597,
+    "relative_update_norm": 0.016999
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.24.self_attn.v_proj",
+    "angle_deg": 89.9702,
+    "relative_update_norm": 0.013738
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.25.self_attn.q_proj",
+    "angle_deg": 90.538,
+    "relative_update_norm": 0.013025
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.25.self_attn.k_proj",
+    "angle_deg": 90.5534,
+    "relative_update_norm": 0.014841
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.25.self_attn.v_proj",
+    "angle_deg": 90.8102,
+    "relative_update_norm": 0.022148
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.26.self_attn.q_proj",
+    "angle_deg": 90.3737,
+    "relative_update_norm": 0.019451
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.26.self_attn.k_proj",
+    "angle_deg": 90.9102,
+    "relative_update_norm": 0.015476
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.26.self_attn.v_proj",
+    "angle_deg": 92.1565,
+    "relative_update_norm": 0.01852
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.27.self_attn.q_proj",
+    "angle_deg": 90.5035,
+    "relative_update_norm": 0.021922
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.27.self_attn.k_proj",
+    "angle_deg": 90.4461,
+    "relative_update_norm": 0.014072
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.27.self_attn.v_proj",
+    "angle_deg": 90.7377,
+    "relative_update_norm": 0.022407
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.28.self_attn.q_proj",
+    "angle_deg": 90.5547,
+    "relative_update_norm": 0.025412
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.28.self_attn.k_proj",
+    "angle_deg": 90.6502,
+    "relative_update_norm": 0.018338
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.28.self_attn.v_proj",
+    "angle_deg": 91.1423,
+    "relative_update_norm": 0.02754
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.29.self_attn.q_proj",
+    "angle_deg": 90.8322,
+    "relative_update_norm": 0.028296
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.29.self_attn.k_proj",
+    "angle_deg": 89.9041,
+    "relative_update_norm": 0.019792
+  },
+  {
+    "method": "dora",
+    "layer": "vlm.text_model.layers.29.self_attn.v_proj",
+    "angle_deg": 90.5122,
+    "relative_update_norm": 0.032158
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "epoch": 1.0,
+    "eval_metric": 62.088882,
+    "eval_loss": 61.592239,
+    "train_loss": 536.815625,
+    "lora_norm_mean": 0.302976,
+    "magnitude_rel_drift": null,
+    "magnitude_mean": null,
+    "n_adapter_layers": 126
+  },
+  {
+    "epoch": 2.0,
+    "eval_metric": 29.241653,
+    "eval_loss": 28.751474,
+    "train_loss": 277.446875,
+    "lora_norm_mean": 0.329287,
+    "magnitude_rel_drift": null,
+    "magnitude_mean": null,
+    "n_adapter_layers": 126
+  },
+  {
+    "epoch": 3.0,
+    "eval_metric": 24.840799,
+    "eval_loss": 24.351017,
+    "train_loss": 214.825,
+    "lora_norm_mean": 0.329595,
+    "magnitude_rel_drift": null,
+    "magnitude_mean": null,
+    "n_adapter_layers": 126
+  }
+]
