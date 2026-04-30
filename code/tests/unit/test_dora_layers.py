@@ -279,6 +279,125 @@ class TestCreateDoRALayer:
             create_dora_layer(unsupported_layer)
 
 
+@pytest.mark.skipif(not IMPORTS_AVAILABLE, reason="DoRA modules not available")
+class TestDoRAGradientFlow:
+    """
+    Verify that all three trainable parameters (lora_A, lora_B, magnitude)
+    receive non-zero gradients after a single forward+backward pass.
+
+    This is the most important correctness property for DoRA: if magnitude
+    has zero gradient, the model degrades to vanilla LoRA with extra overhead.
+    """
+
+    def _make_layer(self, in_features=64, out_features=32, rank=8):
+        base = nn.Linear(in_features, out_features, bias=True)
+        layer = create_dora_layer(base, rank=rank, alpha=16.0, dropout=0.0)
+        return layer
+
+    def test_magnitude_receives_nonzero_gradient(self):
+        """magnitude.grad must be non-None and non-zero after backward."""
+        layer = self._make_layer()
+        x = torch.randn(4, 64, requires_grad=False)
+        out = layer(x)
+        loss = out.sum()
+        loss.backward()
+
+        assert layer.magnitude.grad is not None, (
+            "magnitude.grad is None — magnitude has NO gradient. "
+            "Check that magnitude is in the optimizer and compute_dora_weight "
+            "does not detach it."
+        )
+        assert layer.magnitude.grad.norm().item() > 0, (
+            f"magnitude.grad is all-zero (norm={layer.magnitude.grad.norm().item()}). "
+            "DoRA magnitude is not learning."
+        )
+
+    def test_lora_B_receives_nonzero_gradient(self):
+        """lora_B.grad must be non-None and non-zero after backward."""
+        layer = self._make_layer()
+        x = torch.randn(4, 64)
+        out = layer(x)
+        out.sum().backward()
+
+        assert layer.lora_B.grad is not None
+        assert layer.lora_B.grad.norm().item() > 0, "lora_B.grad is zero"
+
+    def test_lora_A_receives_nonzero_gradient_after_lora_B_updated(self):
+        """
+        lora_A has zero gradient at step 0 (because lora_B=0), but non-zero
+        after lora_B has been updated at least once.
+        """
+        layer = self._make_layer()
+
+        # Step 0: lora_B is all-zeros, so lora_A gradient is zero (B@A = 0,
+        # direction gradient path through A is gated by B).
+        x = torch.randn(4, 64)
+        out = layer(x)
+        out.sum().backward()
+        # lora_A gradient is zero at step 0 — that is expected behaviour
+        lora_a_grad_step0 = layer.lora_A.grad.norm().item() if layer.lora_A.grad is not None else 0.0
+
+        # Simulate one optimizer step to make lora_B non-zero
+        with torch.no_grad():
+            layer.lora_B.data -= 0.01 * layer.lora_B.grad
+        layer.lora_A.grad = None
+        layer.lora_B.grad = None
+        layer.magnitude.grad = None
+
+        # Step 1: lora_B is now non-zero, lora_A should get a gradient
+        out = layer(x)
+        out.sum().backward()
+
+        assert layer.lora_A.grad is not None
+        assert layer.lora_A.grad.norm().item() > 0, (
+            "lora_A.grad is still zero after lora_B was updated. "
+            "Gradient flow through the normalization Jacobian is broken."
+        )
+
+    def test_base_weight_has_no_gradient(self):
+        """base_weight is a buffer and must never accumulate gradient."""
+        layer = self._make_layer()
+        x = torch.randn(4, 64)
+        out = layer(x)
+        out.sum().backward()
+
+        assert layer.base_weight.grad is None, (
+            "base_weight.grad is not None — frozen weight is leaking gradient."
+        )
+
+    def test_magnitude_grad_independent_of_lora_B_being_zero(self):
+        """
+        magnitude gradient must be non-zero even at step 0 when lora_B=0,
+        because magnitude multiplies the direction directly without going
+        through lora_B.  This is a key DoRA invariant.
+        """
+        layer = self._make_layer()
+        # Confirm lora_B starts at zero
+        assert layer.lora_B.data.norm().item() == 0.0, "lora_B should start at zeros"
+
+        x = torch.randn(4, 64)
+        out = layer(x)
+        out.sum().backward()
+
+        assert layer.magnitude.grad is not None
+        assert layer.magnitude.grad.norm().item() > 0, (
+            "magnitude.grad is zero even when lora_B=0. "
+            "This means the gradient path magnitude→direction is broken. "
+            "DoRA magnitude will never learn."
+        )
+
+    def test_normalize_weight_direction_rows_are_unit_norm(self):
+        """After the double-eps fix, each row should be exactly unit norm."""
+        from dora.utils.math_utils import normalize_weight_direction
+        w = torch.randn(16, 32)
+        v = normalize_weight_direction(w)
+        row_norms = v.norm(dim=1)
+        assert torch.allclose(row_norms, torch.ones(16), atol=1e-6), (
+            f"rows are not unit norm after normalization; "
+            f"max deviation = {(row_norms - 1).abs().max().item():.2e}"
+        )
+
+
 if __name__ == "__main__":
     # Run tests if script is called directly
     pytest.main([__file__, "-v"])

@@ -1,0 +1,13 @@
+model: roberta_large
+task: mrpc
+method: lora
+rank: 8
+alpha: 16.0
+dropout: 0.05
+epochs: 5
+batch_size: 16
+grad_accum: 1
+max_length: 128
+warmup_ratio: 0.06
+weight_decay: 0.01
+seed: 42

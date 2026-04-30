@@ -39,7 +39,7 @@ from transformers import (
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dora.models.llama import apply_dora_to_model
-from dora.layers.lora_linear import apply_lora_to_model
+from dora.layers.lora_linear import LoRALinear, apply_lora_to_model
 from dora.data.lerobot_dataset import load_pusht, SMOLVLM_MODEL_ID
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -134,13 +134,14 @@ class AdapterStatsCallback(TrainerCallback):
         self.primary_metric = primary_metric
         self.records = []
         self._last_train_loss = float("nan")
-        self._init_mag_norms = {}
+        self._init_magnitudes = {}   # layer_name → initial magnitude vector (cpu fp32)
 
     def on_train_begin(self, args, state, control, **kwargs):
         for name, m in self.model.named_modules():
             if hasattr(m, "magnitude") and hasattr(m, "lora_A"):
                 with torch.no_grad():
-                    self._init_mag_norms[name] = m.magnitude.float().norm().item()
+                    # Store full vector so on_evaluate can compute true drift
+                    self._init_magnitudes[name] = m.magnitude.float().cpu().clone()
 
     def on_log(self, args, state, control, logs=None, **kwargs):
         if logs and "loss" in logs:
@@ -151,28 +152,34 @@ class AdapterStatsCallback(TrainerCallback):
         eval_metric = float(metrics.get(f"eval_{self.primary_metric}", float("nan")))
         eval_loss   = float(metrics.get("eval_loss", float("nan")))
 
-        lora_norms, mag_drifts, mag_means = [], [], []
+        lora_norms, mag_drifts, mag_means, mag_grad_norms = [], [], [], []
         for name, m in self.model.named_modules():
             if hasattr(m, "lora_A") and hasattr(m, "lora_B"):
                 with torch.no_grad():
                     delta = m.lora_B.float() @ m.lora_A.float()
                     lora_norms.append(delta.norm().item())
                     if hasattr(m, "magnitude"):
-                        mag = m.magnitude.float()
+                        mag = m.magnitude.float().cpu()
                         mag_means.append(mag.mean().item())
-                        init_n = self._init_mag_norms.get(name)
-                        if init_n and init_n > 0:
-                            mag_drifts.append(abs(mag.norm().item() - init_n) / init_n)
+                        # True element-wise drift: ||m_t - m_0||_F / ||m_0||_F
+                        m0 = self._init_magnitudes.get(name)
+                        if m0 is not None and m0.norm().item() > 0:
+                            mag_drifts.append((mag - m0).norm().item() / m0.norm().item())
+                if hasattr(m, "magnitude") and m.magnitude.grad is not None:
+                    mag_grad_norms.append(m.magnitude.grad.float().norm().item())
 
         self.records.append({
-            "epoch":               round(epoch, 2),
-            "eval_metric":         round(eval_metric, 6),
-            "eval_loss":           round(eval_loss, 6),
-            "train_loss":          round(self._last_train_loss, 6),
-            "lora_norm_mean":      round(float(np.mean(lora_norms)), 6) if lora_norms else None,
-            "magnitude_rel_drift": round(float(np.mean(mag_drifts)), 6) if mag_drifts else None,
-            "magnitude_mean":      round(float(np.mean(mag_means)), 6) if mag_means else None,
-            "n_adapter_layers":    len(lora_norms),
+            "epoch":                  round(epoch, 2),
+            "eval_metric":            round(eval_metric, 6),
+            "eval_loss":              round(eval_loss, 6),
+            "train_loss":             round(self._last_train_loss, 6),
+            "lora_norm_mean":         round(float(np.mean(lora_norms)),    6) if lora_norms    else None,
+            "lora_norm_std":          round(float(np.std(lora_norms)),     6) if lora_norms    else None,
+            "magnitude_rel_drift":    round(float(np.mean(mag_drifts)),    6) if mag_drifts    else None,
+            "magnitude_mean":         round(float(np.mean(mag_means)),     6) if mag_means     else None,
+            # None here means magnitude params received NO gradients → effectively frozen
+            "magnitude_grad_norm":    round(float(np.mean(mag_grad_norms)),6) if mag_grad_norms else None,
+            "n_adapter_layers":       len(lora_norms),
         })
 
     def _per_layer_stats(self) -> list:
@@ -220,12 +227,43 @@ class AdapterStatsCallback(TrainerCallback):
             logger.info(f"Per-layer adapter stats → {layer_path}  ({len(layer_rows)} layers)")
 
 
+class AdapterCheckpointCallback(TrainerCallback):
+    """
+    Save adapter weights after each evaluation (overwrites latest).
+    Captures LoRA A/B and DoRA A/B/magnitude updates during training.
+    """
+
+    def __init__(self, model: torch.nn.Module, output_dir: str, method: str):
+        self.model = model
+        self.output_dir = output_dir
+        self.method = method
+
+    def on_evaluate(self, args, state, control, metrics=None, **kwargs):
+        if self.method == "dora":
+            from dora.layers.base import DoRAStateManager
+
+            out = os.path.join(self.output_dir, "dora_adapter_latest.pt")
+            DoRAStateManager.save_dora_state(self.model, out, include_base_weights=False)
+        elif self.method == "lora":
+            lora_state = {}
+            for name, module in self.model.named_modules():
+                if isinstance(module, LoRALinear):
+                    lora_state[name] = {
+                        "lora_A": module.lora_A.data,
+                        "lora_B": module.lora_B.data,
+                    }
+            out = os.path.join(self.output_dir, "lora_adapter_latest.pt")
+            torch.save({"lora_state": lora_state}, out)
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
-def parse_args():
+def _build_vla_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="DoRA / LoRA / full FT on SmolVLM Push-T VLA")
+    p.add_argument("--config", default=None, metavar="FILE",
+                   help="YAML config file; CLI flags override any YAML value")
 
     p.add_argument("--method", choices=["dora", "lora", "full"], default="dora")
     p.add_argument("--rank",    type=int,   default=8)
@@ -233,22 +271,32 @@ def parse_args():
     p.add_argument("--dropout", type=float, default=0.05)
     p.add_argument("--target_modules", nargs="+", default=SMOLVLM_TARGET_MODULES)
 
-    # Training — small batch + grad accum for VLM memory
     p.add_argument("--epochs",       type=int,   default=3)
     p.add_argument("--batch_size",   type=int,   default=4)
     p.add_argument("--grad_accum",   type=int,   default=8)
-    p.add_argument("--lr",           type=float, default=1e-4)
+    p.add_argument("--lr",           type=float, default=None)
     p.add_argument("--weight_decay", type=float, default=0.01)
     p.add_argument("--warmup_ratio", type=float, default=0.05)
     p.add_argument("--seed",         type=int,   default=42)
     p.add_argument("--val_split",    type=float, default=0.2)
     p.add_argument("--output_dir",   default=None)
-    p.add_argument("--max_train_samples", type=int, default=None,
-                   help="If set, subsample training set for faster iteration")
+    p.add_argument("--max_train_samples", type=int, default=None)
 
     p.add_argument("--bf16",  action="store_true")
     p.add_argument("--fp16",  action="store_true")
     p.add_argument("--wandb", action="store_true")
+    return p
+
+
+def parse_args():
+    import yaml as _yaml
+
+    p = _build_vla_parser()
+    pre, _ = p.parse_known_args()
+    if pre.config:
+        with open(pre.config) as _f:
+            _cfg = _yaml.safe_load(_f) or {}
+        p.set_defaults(**{k: v for k, v in _cfg.items() if v is not None})
 
     return p.parse_args()
 
@@ -294,6 +342,11 @@ def main():
     # ------------------------------------------------------------------
     # Apply adapter
     # ------------------------------------------------------------------
+    # Resolve LR defaults per method
+    if args.lr is None:
+        args.lr = 2e-5 if args.method == "full" else 1e-4
+        logger.info(f"Auto-selected lr={args.lr} for method={args.method}")
+
     if args.method == "dora":
         apply_dora_to_model(model.vlm, target_modules=args.target_modules,
                             rank=args.rank, alpha=args.alpha, dropout=args.dropout)
@@ -305,9 +358,6 @@ def main():
     else:
         for param in model.parameters():
             param.requires_grad = True
-        if args.lr == 1e-4:
-            args.lr = 2e-5
-            logger.info(f"Full FT: auto-setting lr={args.lr}")
 
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total     = sum(p.numel() for p in model.parameters())
@@ -373,7 +423,24 @@ def main():
         remove_unused_columns=False,
     )
 
-    stats_cb = AdapterStatsCallback(model, args.output_dir)
+    # For adapter runs, use custom optimizer so lora_A/lora_B/magnitude get
+    # weight_decay=0. VLA action head is small but benefits from mild decay.
+    if args.method in ("dora", "lora"):
+        _ADAPTER_LEAVES = {"lora_A", "lora_B", "magnitude"}
+        _adapter_p, _head_p = [], []
+        for _n, _p in model.named_parameters():
+            if not _p.requires_grad:
+                continue
+            (_adapter_p if _n.split(".")[-1] in _ADAPTER_LEAVES else _head_p).append(_p)
+        _vla_optimizer = torch.optim.AdamW(
+            [{"params": _adapter_p, "weight_decay": 0.0},
+             {"params": _head_p,    "weight_decay": args.weight_decay}],
+            lr=args.lr,
+        )
+        optimizers = (_vla_optimizer, None)
+    else:
+        optimizers = (None, None)
+
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -382,6 +449,7 @@ def main():
         data_collator=vla_collator,
         compute_metrics=build_compute_metrics(),
         callbacks=[stats_cb] if args.method in ("dora", "lora") else [],
+        optimizers=optimizers,
     )
 
     logger.info("Training...")
@@ -405,6 +473,15 @@ def main():
                       for n, m in model.named_modules() if isinstance(m, LoRALinear)}
         torch.save({"lora_state": lora_state},
                    os.path.join(args.output_dir, "lora_adapter.pt"))
+
+    torch.save(model.action_head.state_dict(),
+               os.path.join(args.output_dir, "action_head.pt"))
+    return results
+
+
+if __name__ == "__main__":
+    main()
+t"))
 
     torch.save(model.action_head.state_dict(),
                os.path.join(args.output_dir, "action_head.pt"))

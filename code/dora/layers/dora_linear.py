@@ -172,7 +172,7 @@ class DoRALinear(nn.Module):
         if not self._magnitude_initialized:
             raise RuntimeError("Base weight not loaded. Call load_base_weight() first.")
 
-        # Apply dropout to input for LoRA path
+        # Apply dropout only for LoRA update path
         x_dropped = self.dropout(x)
 
         if not self._dora_enabled:
@@ -181,7 +181,7 @@ class DoRALinear(nn.Module):
             lora_output = self.scaling * F.linear(x_dropped, self.lora_B @ self.lora_A)
             return base_output + lora_output
 
-        # DoRA forward pass
+        # DoRA forward pass (no input dropout; matches paper formulation)
         effective_weight = self.get_effective_weight()
         return F.linear(x, effective_weight, self.bias)
 

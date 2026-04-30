@@ -1,0 +1,12 @@
+model: vit
+data_dir: ../data/cornell_grasps
+method: dora
+rank: 8
+alpha: 16.0
+dropout: 0.05
+epochs: 30
+batch_size: 32
+weight_decay: 0.01
+warmup_ratio: 0.1
+seed: 42
+val_split: 0.2

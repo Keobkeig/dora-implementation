@@ -228,14 +228,31 @@ class AdapterStatsCallback(TrainerCallback):
         self.primary_metric = primary_metric
         self.records: list = []
         self._last_train_loss: float = float("nan")
-        self._init_mag_norms: dict = {}   # layer_name → initial ||magnitude||
+        self._init_magnitudes: dict = {}   # layer_name → initial magnitude vector (cpu fp32)
 
     def on_train_begin(self, args, state, control, **kwargs):
-        """Snapshot initial magnitude norms so we can track relative drift."""
+        """Snapshot initial magnitude vectors and verify gradient flow."""
         for name, module in self.model.named_modules():
             if hasattr(module, "magnitude") and hasattr(module, "lora_A"):
                 with torch.no_grad():
-                    self._init_mag_norms[name] = module.magnitude.float().norm().item()
+                    # Store full vector (not just norm) so we can compute true drift
+                    self._init_magnitudes[name] = module.magnitude.float().cpu().clone()
+
+        # Sanity-check gradient flow for magnitude parameters
+        n_mag_params = sum(
+            1 for _, m in self.model.named_modules()
+            if hasattr(m, "magnitude") and m.magnitude.requires_grad
+        )
+        n_frozen = sum(
+            1 for _, m in self.model.named_modules()
+            if hasattr(m, "magnitude") and not m.magnitude.requires_grad
+        )
+        import logging as _logging
+        _log = _logging.getLogger(__name__)
+        _log.info(
+            f"[AdapterStats] DoRA magnitude params: {n_mag_params} trainable, "
+            f"{n_frozen} frozen"
+        )
 
     def on_log(self, args, state, control, logs=None, **kwargs):
         if logs and "loss" in logs:
@@ -248,22 +265,29 @@ class AdapterStatsCallback(TrainerCallback):
 
         mag_means, mag_stds, lora_norms = [], [], []
 
-        mag_rel_drifts = []   # ||m_t - m_0|| / ||m_0|| per layer
+        # True element-wise relative drift: ||m_t - m_0||_2 / ||m_0||_2
+        # (NOT |norm(m_t) - norm(m_0)| which masks sign-cancellation)
+        mag_rel_drifts = []
+        mag_grad_norms = []   # gradient norms for magnitude params (non-None if grad exists)
 
         for name, module in self.model.named_modules():
             # DoRA layer
             if hasattr(module, "magnitude") and hasattr(module, "lora_A") and hasattr(module, "lora_B"):
                 with torch.no_grad():
-                    mag = module.magnitude.float()
+                    mag = module.magnitude.float().cpu()
                     mag_means.append(mag.mean().item())
                     mag_stds.append(mag.std().item())
-                    # Relative drift from initialisation — robust to cancellation
-                    init_norm = self._init_mag_norms.get(name)
-                    if init_norm and init_norm > 0:
-                        curr_norm = mag.norm().item()
-                        mag_rel_drifts.append(abs(curr_norm - init_norm) / init_norm)
+                    # Correct drift: Frobenius distance from init, normalised by init norm
+                    m0 = self._init_magnitudes.get(name)
+                    if m0 is not None and m0.norm().item() > 0:
+                        drift = (mag - m0).norm().item() / m0.norm().item()
+                        mag_rel_drifts.append(drift)
                     delta = module.lora_B.float() @ module.lora_A.float()
                     lora_norms.append(delta.norm().item())
+                # Track whether magnitude is receiving gradients
+                if module.magnitude.grad is not None:
+                    mag_grad_norms.append(module.magnitude.grad.float().norm().item())
+
             # LoRA-only layer (no magnitude)
             elif hasattr(module, "lora_A") and hasattr(module, "lora_B") and not hasattr(module, "magnitude"):
                 with torch.no_grad():
@@ -275,12 +299,13 @@ class AdapterStatsCallback(TrainerCallback):
             "eval_metric":            round(eval_metric, 6),
             "eval_loss":              round(eval_loss, 6),
             "train_loss":             round(self._last_train_loss, 6),
-            "lora_norm_mean":         round(float(np.mean(lora_norms)),      6) if lora_norms      else None,
-            "lora_norm_std":          round(float(np.std(lora_norms)),        6) if lora_norms      else None,
-            # magnitude_rel_drift: how much the per-layer magnitude norms have
-            # shifted from their initial values (avoids mean-cancellation)
-            "magnitude_rel_drift":    round(float(np.mean(mag_rel_drifts)),  6) if mag_rel_drifts  else None,
-            "magnitude_mean":         round(float(np.mean(mag_means)),        6) if mag_means       else None,
+            "lora_norm_mean":         round(float(np.mean(lora_norms)),       6) if lora_norms      else None,
+            "lora_norm_std":          round(float(np.std(lora_norms)),         6) if lora_norms      else None,
+            # Correct: ||m_t - m_0||_F / ||m_0||_F (element-wise Frobenius drift)
+            "magnitude_rel_drift":    round(float(np.mean(mag_rel_drifts)),   6) if mag_rel_drifts  else None,
+            "magnitude_mean":         round(float(np.mean(mag_means)),         6) if mag_means       else None,
+            # If this is 0.0 or None, magnitude params have no/zero gradient → frozen
+            "magnitude_grad_norm":    round(float(np.mean(mag_grad_norms)),   6) if mag_grad_norms  else None,
             "n_adapter_layers":       len(lora_norms),
         }
         self.records.append(record)
@@ -339,8 +364,37 @@ class AdapterStatsCallback(TrainerCallback):
             logger.info(f"Per-layer adapter stats → {layer_path}  ({len(layer_rows)} layers)")
 
 
+class AdapterCheckpointCallback(TrainerCallback):
+    """
+    Save adapter weights after each evaluation (overwrites latest).
+    Captures LoRA A/B and DoRA A/B/magnitude updates during training.
+    """
+
+    def __init__(self, model: torch.nn.Module, output_dir: str, method: str):
+        self.model = model
+        self.output_dir = output_dir
+        self.method = method
+
+    def on_evaluate(self, args, state, control, metrics=None, **kwargs):
+        if self.method == "dora":
+            from dora.layers.base import DoRAStateManager
+
+            out = os.path.join(self.output_dir, "dora_adapter_latest.pt")
+            DoRAStateManager.save_dora_state(self.model, out, include_base_weights=False)
+        elif self.method == "lora":
+            lora_state = {}
+            for name, module in self.model.named_modules():
+                if isinstance(module, LoRALinear):
+                    lora_state[name] = {
+                        "lora_A": module.lora_A.data,
+                        "lora_B": module.lora_B.data,
+                    }
+            out = os.path.join(self.output_dir, "lora_adapter_latest.pt")
+            torch.save({"lora_state": lora_state}, out)
+
+
 # ---------------------------------------------------------------------------
-# DoRA freeze helper
+# DoRA / LoRA freeze and optimizer helpers
 # ---------------------------------------------------------------------------
 
 def freeze_base_weights(model: torch.nn.Module):
@@ -358,45 +412,81 @@ def freeze_base_weights(model: torch.nn.Module):
     logger.info(f"Trainable: {trainable:,} / {total:,} ({100 * trainable / total:.3f}%)")
 
 
+def build_adapter_optimizer(
+    model: torch.nn.Module,
+    lr: float,
+    weight_decay: float,
+) -> torch.optim.Optimizer:
+    """
+    AdamW with weight_decay=0 for adapter matrices and weight_decay for the
+    classification head.
+
+    The HuggingFace Trainer default applies weight_decay to *all* trainable
+    parameters whose names do not end in "bias" or contain "LayerNorm.weight".
+    That incorrectly penalises lora_A, lora_B and magnitude toward zero,
+    counteracting the task-adaptation gradient and degrading both LoRA and DoRA.
+
+    Head parameters (score / classifier) benefit from mild regularisation, so
+    weight_decay is applied there and nowhere else.
+    """
+    _ADAPTER_LEAVES = {"lora_A", "lora_B", "magnitude"}
+    adapter_params, head_params = [], []
+    for name, param in model.named_parameters():
+        if not param.requires_grad:
+            continue
+        leaf = name.split(".")[-1]
+        if leaf in _ADAPTER_LEAVES:
+            adapter_params.append(param)
+        else:
+            head_params.append(param)   # score.weight, classifier.dense.weight, …
+
+    logger.info(
+        f"Optimizer groups — adapter (wd=0): {sum(p.numel() for p in adapter_params):,} params  |  "
+        f"head (wd={weight_decay}): {sum(p.numel() for p in head_params):,} params"
+    )
+    return torch.optim.AdamW(
+        [
+            {"params": adapter_params, "weight_decay": 0.0},
+            {"params": head_params,    "weight_decay": weight_decay},
+        ],
+        lr=lr,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Train LLaMA+DoRA on GLUE")
+def _build_glue_parser() -> argparse.ArgumentParser:
+    """Return the full argument parser (used in two-pass YAML loading)."""
+    parser = argparse.ArgumentParser(description="Train on GLUE (DoRA / LoRA / full FT)")
+    parser.add_argument("--config", default=None, metavar="FILE",
+                        help="YAML config file; CLI flags override any YAML value")
 
-    model_group = parser.add_mutually_exclusive_group(required=True)
+    # Model — not required here; validated after YAML merge
+    model_group = parser.add_mutually_exclusive_group(required=False)
     model_group.add_argument(
-        "--model", choices=list(MODEL_PRESETS.keys()), help="Size preset (1b / 3b / 7b)"
+        "--model", choices=list(MODEL_PRESETS.keys()), help="Size preset"
     )
     model_group.add_argument("--model_name", type=str, help="HuggingFace model ID or local path")
 
-    parser.add_argument("--task", required=True, choices=list(GLUE_TASKS.keys()))
-    parser.add_argument(
-        "--method",
-        choices=["dora", "lora", "full"],
-        default="dora",
-        help="Adapter method: dora (default), lora baseline, or full fine-tuning",
-    )
+    parser.add_argument("--task", default=None, choices=list(GLUE_TASKS.keys()))
+    parser.add_argument("--method", choices=["dora", "lora", "full"], default="dora")
 
-    # Adapter hyperparameters
-    parser.add_argument("--rank", type=int, default=8, help="LoRA rank")
-    parser.add_argument("--alpha", type=float, default=16.0, help="LoRA alpha")
+    # Adapter
+    parser.add_argument("--rank", type=int, default=8)
+    parser.add_argument("--alpha", type=float, default=16.0)
     parser.add_argument("--dropout", type=float, default=0.05)
-    parser.add_argument(
-        "--target_modules",
-        nargs="+",
-        default=None,
-        help="Linear layer names to apply adapter to (auto-detected per architecture if omitted)",
-    )
+    parser.add_argument("--target_modules", nargs="+", default=None)
 
     # Training
-    parser.add_argument("--lr", type=float, default=2e-4)
+    parser.add_argument("--lr", type=float, default=None,
+                        help="Defaults to 2e-4 (adapter) / 2e-5 (full FT)")
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--grad_accum", type=int, default=1)
     parser.add_argument("--max_length", type=int, default=128)
-    parser.add_argument("--warmup_ratio", type=float, default=0.06, help="Fraction of steps used for LR warmup")
+    parser.add_argument("--warmup_ratio", type=float, default=0.06)
     parser.add_argument("--weight_decay", type=float, default=0.01)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output_dir", type=str, default=None)
@@ -404,12 +494,35 @@ def parse_args():
     # Hardware
     parser.add_argument("--fp16", action="store_true")
     parser.add_argument("--bf16", action="store_true")
-    parser.add_argument("--no_mps", action="store_true", help="Disable MPS (Apple GPU) even if available")
+    parser.add_argument("--no_mps", action="store_true")
 
     # Logging
-    parser.add_argument("--wandb", action="store_true", help="Enable Weights & Biases logging (off by default)")
+    parser.add_argument("--wandb", action="store_true")
+    return parser
 
-    return parser.parse_args()
+
+def parse_args():
+    import yaml as _yaml
+
+    parser = _build_glue_parser()
+
+    # Pass 1 — discover --config path without failing on unknown args
+    pre, _ = parser.parse_known_args()
+    if pre.config:
+        with open(pre.config) as _f:
+            _cfg = _yaml.safe_load(_f) or {}
+        # YAML values become new defaults; explicit CLI flags still win
+        parser.set_defaults(**{k: v for k, v in _cfg.items() if v is not None})
+
+    # Pass 2 — full parse with YAML-enriched defaults
+    args = parser.parse_args()
+
+    if args.model is None and args.model_name is None:
+        parser.error("--model or --model_name is required (or set 'model:' in the config)")
+    if args.task is None:
+        parser.error("--task is required (or set 'task:' in the config)")
+
+    return args
 
 
 def main():
@@ -470,6 +583,11 @@ def main():
     # ------------------------------------------------------------------
     # Apply adapter or prepare for full fine-tuning
     # ------------------------------------------------------------------
+    # Resolve LR defaults per method (None sentinel avoids fragile float comparison)
+    if args.lr is None:
+        args.lr = 2e-5 if args.method == "full" else 2e-4
+        logger.info(f"Auto-selected lr={args.lr} for method={args.method}")
+
     if args.method == "dora":
         apply_dora_to_model(
             model,
@@ -489,12 +607,9 @@ def main():
         )
         freeze_base_weights(model)
     else:
-        # Full fine-tuning: all parameters trainable, use a lower LR
+        # Full fine-tuning: all parameters trainable
         for param in model.parameters():
             param.requires_grad = True
-        if args.lr == 2e-4:  # user didn't override; use a FT-appropriate default
-            args.lr = 2e-5
-            logger.info(f"Full fine-tuning: auto-setting lr={args.lr}")
 
     # Print trainable-parameter summary
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -551,6 +666,7 @@ def main():
         lr_scheduler_type="cosine",
         eval_strategy="epoch",
         save_strategy="epoch",
+        save_total_limit=1,
         load_best_model_at_end=True,
         metric_for_best_model=task_cfg["primary_metric"],
         greater_is_better=True,
@@ -570,6 +686,21 @@ def main():
         primary_metric=task_cfg["primary_metric"],
     )
 
+    # For adapter runs, pass a custom optimizer so adapter matrices (lora_A,
+    # lora_B, magnitude) get weight_decay=0. The HF Trainer default would apply
+    # weight_decay to every non-bias, non-LayerNorm parameter, which incorrectly
+    # penalises the adapter toward zero and suppresses DoRA magnitude learning.
+    # For full fine-tuning, let the Trainer build its own optimizer (standard).
+    if args.method in ("dora", "lora"):
+        adapter_optimizer = build_adapter_optimizer(model, args.lr, args.weight_decay)
+        optimizers = (adapter_optimizer, None)   # None → Trainer builds scheduler
+    else:
+        optimizers = (None, None)
+
+    callbacks = []
+    if args.method in ("dora", "lora"):
+        callbacks.append(AdapterCheckpointCallback(model, args.output_dir, args.method))
+
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -578,7 +709,8 @@ def main():
         processing_class=tokenizer,
         data_collator=DataCollatorWithPadding(tokenizer=tokenizer),
         compute_metrics=build_compute_metrics(args.task),
-        callbacks=[stats_cb] if args.method in ("dora", "lora") else [],
+        callbacks=callbacks,
+        optimizers=optimizers,
     )
 
     logger.info("Training...")

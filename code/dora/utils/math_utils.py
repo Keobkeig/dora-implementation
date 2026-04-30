@@ -27,7 +27,7 @@ def column_wise_l2_norm(weight: torch.Tensor, eps: float = 1e-8) -> torch.Tensor
 
 def normalize_weight_direction(weight: torch.Tensor, eps: float = 1e-8) -> torch.Tensor:
     """
-    Normalize weight matrix column-wise to unit vectors.
+    Normalize weight matrix row-wise to (approximate) unit vectors.
 
     Args:
         weight: Weight tensor of shape (out_features, in_features)
@@ -36,8 +36,11 @@ def normalize_weight_direction(weight: torch.Tensor, eps: float = 1e-8) -> torch
     Returns:
         Normalized weight tensor of same shape
     """
+    # column_wise_l2_norm already clamps norms to min=eps, so dividing by
+    # (norms + eps) would double-count eps and produce slightly-sub-unit rows.
+    # Divide by norms directly; the clamp guarantees no division by zero.
     norms = column_wise_l2_norm(weight, eps)
-    return weight / (norms.unsqueeze(1) + eps)
+    return weight / norms.unsqueeze(1)
 
 
 def decompose_weight_dora(
