@@ -1,0 +1,218 @@
+[
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.0.self_attn.k_proj",
+    "angle_deg": 90.1346,
+    "relative_update_norm": 0.027133
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.0.self_attn.v_proj",
+    "angle_deg": 90.6039,
+    "relative_update_norm": 0.051599
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.0.self_attn.q_proj",
+    "angle_deg": 90.624,
+    "relative_update_norm": 0.031141
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.1.self_attn.k_proj",
+    "angle_deg": 89.1855,
+    "relative_update_norm": 0.035717
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.1.self_attn.v_proj",
+    "angle_deg": 90.3682,
+    "relative_update_norm": 0.047022
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.1.self_attn.q_proj",
+    "angle_deg": 89.4827,
+    "relative_update_norm": 0.036107
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.2.self_attn.k_proj",
+    "angle_deg": 90.1379,
+    "relative_update_norm": 0.040991
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.2.self_attn.v_proj",
+    "angle_deg": 90.6621,
+    "relative_update_norm": 0.043537
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.2.self_attn.q_proj",
+    "angle_deg": 90.1667,
+    "relative_update_norm": 0.038344
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.3.self_attn.k_proj",
+    "angle_deg": 90.3917,
+    "relative_update_norm": 0.044238
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.3.self_attn.v_proj",
+    "angle_deg": 90.2897,
+    "relative_update_norm": 0.04189
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.3.self_attn.q_proj",
+    "angle_deg": 90.3106,
+    "relative_update_norm": 0.042088
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.4.self_attn.k_proj",
+    "angle_deg": 89.7601,
+    "relative_update_norm": 0.042321
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.4.self_attn.v_proj",
+    "angle_deg": 90.0372,
+    "relative_update_norm": 0.035171
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.4.self_attn.q_proj",
+    "angle_deg": 89.8698,
+    "relative_update_norm": 0.040154
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.5.self_attn.k_proj",
+    "angle_deg": 89.5258,
+    "relative_update_norm": 0.043963
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.5.self_attn.v_proj",
+    "angle_deg": 90.1593,
+    "relative_update_norm": 0.037476
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.5.self_attn.q_proj",
+    "angle_deg": 89.5463,
+    "relative_update_norm": 0.041405
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.6.self_attn.k_proj",
+    "angle_deg": 89.1543,
+    "relative_update_norm": 0.0425
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.6.self_attn.v_proj",
+    "angle_deg": 90.0778,
+    "relative_update_norm": 0.040051
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.6.self_attn.q_proj",
+    "angle_deg": 89.5727,
+    "relative_update_norm": 0.04657
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.7.self_attn.k_proj",
+    "angle_deg": 89.3166,
+    "relative_update_norm": 0.039952
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.7.self_attn.v_proj",
+    "angle_deg": 90.5692,
+    "relative_update_norm": 0.042886
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.7.self_attn.q_proj",
+    "angle_deg": 89.6561,
+    "relative_update_norm": 0.04294
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.8.self_attn.k_proj",
+    "angle_deg": 89.9418,
+    "relative_update_norm": 0.045992
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.8.self_attn.v_proj",
+    "angle_deg": 90.5339,
+    "relative_update_norm": 0.041727
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.8.self_attn.q_proj",
+    "angle_deg": 90.1634,
+    "relative_update_norm": 0.048182
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.9.self_attn.k_proj",
+    "angle_deg": 89.7358,
+    "relative_update_norm": 0.041817
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.9.self_attn.v_proj",
+    "angle_deg": 89.7605,
+    "relative_update_norm": 0.034777
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.9.self_attn.q_proj",
+    "angle_deg": 89.9626,
+    "relative_update_norm": 0.045054
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.10.self_attn.k_proj",
+    "angle_deg": 88.3722,
+    "relative_update_norm": 0.05209
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.10.self_attn.v_proj",
+    "angle_deg": 89.6128,
+    "relative_update_norm": 0.032412
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.10.self_attn.q_proj",
+    "angle_deg": 88.0719,
+    "relative_update_norm": 0.05143
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.11.self_attn.k_proj",
+    "angle_deg": 89.7292,
+    "relative_update_norm": 0.050424
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.11.self_attn.v_proj",
+    "angle_deg": 89.8685,
+    "relative_update_norm": 0.036217
+  },
+  {
+    "method": "dora",
+    "layer": "backbone.encoder.layers.11.self_attn.q_proj",
+    "angle_deg": 89.769,
+    "relative_update_norm": 0.050005
+  }
+]
