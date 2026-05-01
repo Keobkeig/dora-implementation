@@ -1,0 +1,20 @@
+[
+  {
+    "task": "mrpc",
+    "split": "validation",
+    "index": 133,
+    "sentence1": "In fiction : Edward P. Jones ( \" The Known World \" ) and Scott Spencer ( \" A Ship Made of Paper \" ) .",
+    "label_id": 0,
+    "label": "not_equivalent",
+    "sentence2": "The fifth nominee for fiction is Scott Spencer , for A Ship Made of Paper ."
+  },
+  {
+    "task": "mrpc",
+    "split": "validation",
+    "index": 264,
+    "sentence1": "Corixa shares rose 54 cents to $ 7.74 yesterday on the Nasdaq Stock Market .",
+    "label_id": 0,
+    "label": "not_equivalent",
+    "sentence2": "Shares of Corixa rose 54 cents , or about 8 percent , to close at $ 7.74 ."
+  }
+]

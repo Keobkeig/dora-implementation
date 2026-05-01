@@ -1,0 +1,178 @@
+[
+  {
+    "run": "glue_mrpc_roberta_dora_r8",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_mrpc_roberta_full",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_mrpc_roberta_large_dora_r8",
+    "adapter_stats_last": {
+      "epoch": 5.0,
+      "eval_metric": 0.892685,
+      "eval_loss": 0.336344,
+      "train_loss": 0.251379,
+      "lora_norm_mean": 0.559095,
+      "lora_norm_std": 0.113486,
+      "magnitude_rel_drift": 0.0,
+      "magnitude_mean": 1.37697,
+      "n_adapter_layers": 72
+    }
+  },
+  {
+    "run": "glue_mrpc_roberta_large_full",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_mrpc_roberta_large_lora_r8",
+    "adapter_stats_last": {
+      "epoch": 5.0,
+      "eval_metric": 0.894866,
+      "eval_loss": 0.284767,
+      "train_loss": 0.29672,
+      "lora_norm_mean": 0.527693,
+      "lora_norm_std": 0.118892,
+      "magnitude_rel_drift": null,
+      "magnitude_mean": null,
+      "n_adapter_layers": 72
+    }
+  },
+  {
+    "run": "glue_mrpc_roberta_lora_r8",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_rte_roberta_dora_r8",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_rte_roberta_dora_r8_stats",
+    "adapter_stats_last": {
+      "epoch": 5.0,
+      "eval_metric": 0.707581,
+      "eval_loss": 0.560301,
+      "train_loss": 0.473452,
+      "lora_norm_mean": 0.503017,
+      "lora_norm_std": 0.080784,
+      "magnitude_rel_drift": 0.0,
+      "magnitude_mean": 1.722326,
+      "n_adapter_layers": 36
+    }
+  },
+  {
+    "run": "glue_rte_roberta_full",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_rte_roberta_large_dora_r8",
+    "adapter_stats_last": {
+      "epoch": 5.0,
+      "eval_metric": 0.768953,
+      "eval_loss": 0.496904,
+      "train_loss": 0.351372,
+      "lora_norm_mean": 0.471394,
+      "lora_norm_std": 0.106681,
+      "magnitude_rel_drift": 0.0,
+      "magnitude_mean": 1.37697,
+      "n_adapter_layers": 72
+    }
+  },
+  {
+    "run": "glue_rte_roberta_large_full",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_rte_roberta_large_lora_r8",
+    "adapter_stats_last": {
+      "epoch": 5.0,
+      "eval_metric": 0.787004,
+      "eval_loss": 0.479977,
+      "train_loss": 0.344368,
+      "lora_norm_mean": 0.464603,
+      "lora_norm_std": 0.112563,
+      "magnitude_rel_drift": null,
+      "magnitude_mean": null,
+      "n_adapter_layers": 72
+    }
+  },
+  {
+    "run": "glue_rte_roberta_lora_r8",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_rte_roberta_lora_r8_stats",
+    "adapter_stats_last": {
+      "epoch": 5.0,
+      "eval_metric": 0.693141,
+      "eval_loss": 0.570351,
+      "train_loss": 0.506489,
+      "lora_norm_mean": 0.493608,
+      "lora_norm_std": 0.058463,
+      "magnitude_rel_drift": null,
+      "magnitude_mean": null,
+      "n_adapter_layers": 36
+    }
+  },
+  {
+    "run": "glue_sst2_1b_dora_r8",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_sst2_1b_r8",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_sst2_3b_dora_r8",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_sst2_3b_r8",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_sst2_roberta_dora_r8",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_sst2_roberta_full",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_sst2_roberta_large_dora_r8",
+    "adapter_stats_last": {
+      "epoch": 5.0,
+      "eval_metric": 0.96445,
+      "eval_loss": 0.149649,
+      "train_loss": 0.124711,
+      "lora_norm_mean": 1.070144,
+      "lora_norm_std": 0.18494,
+      "magnitude_rel_drift": 0.0,
+      "magnitude_mean": 1.37697,
+      "n_adapter_layers": 72
+    }
+  },
+  {
+    "run": "glue_sst2_roberta_large_full",
+    "adapter_stats_last": null
+  },
+  {
+    "run": "glue_sst2_roberta_large_lora_r8",
+    "adapter_stats_last": {
+      "epoch": 5.0,
+      "eval_metric": 0.955275,
+      "eval_loss": 0.159184,
+      "train_loss": 0.124485,
+      "lora_norm_mean": 1.073122,
+      "lora_norm_std": 0.164792,
+      "magnitude_rel_drift": null,
+      "magnitude_mean": null,
+      "n_adapter_layers": 72
+    }
+  },
+  {
+    "run": "glue_sst2_roberta_lora_r8",
+    "adapter_stats_last": null
+  }
+]

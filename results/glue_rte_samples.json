@@ -1,0 +1,20 @@
+[
+  {
+    "task": "rte",
+    "split": "validation",
+    "index": 189,
+    "sentence1": "The number of Danes opposed to swapping the krone for the euro has increased slightly to 35.3 percent, up from 34.6 percent in April, according to a poll published on Thursday by Danske Bank.",
+    "label_id": 0,
+    "label": "not_entailment",
+    "sentence2": "The introduction of the euro has been opposed."
+  },
+  {
+    "task": "rte",
+    "split": "validation",
+    "index": 5,
+    "sentence1": "In 1979, the leaders signed the Egypt-Israel peace treaty on the White House lawn. Both President Begin and Sadat received the Nobel Peace Prize for their work. The two nations have enjoyed peaceful relations to this day.",
+    "label_id": 0,
+    "label": "not_entailment",
+    "sentence2": "The Israel-Egypt Peace Agreement was signed in 1979."
+  }
+]

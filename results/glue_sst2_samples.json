@@ -1,0 +1,18 @@
+[
+  {
+    "task": "sst2",
+    "split": "validation",
+    "index": 501,
+    "sentence": "harrison 's flowers puts its heart in the right place , but its brains are in no particular place at all . ",
+    "label_id": 1,
+    "label": "positive"
+  },
+  {
+    "task": "sst2",
+    "split": "validation",
+    "index": 626,
+    "sentence": "this flick is about as cool and crowd-pleasing as a documentary can get . ",
+    "label_id": 1,
+    "label": "positive"
+  }
+]
