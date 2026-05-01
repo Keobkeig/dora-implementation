@@ -13,6 +13,7 @@ import sys
 import numpy as np
 import torch
 from PIL import Image, ImageDraw
+from transformers import AutoImageProcessor
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -35,16 +36,18 @@ def _load_lora_weights(model: torch.nn.Module, adapter_path: str) -> None:
 
 
 def _pose_to_corners(target: np.ndarray, img_w: int, img_h: int) -> np.ndarray:
-    cx = target[0] * img_w
-    cy = target[1] * img_h
+    cx = float(np.clip(target[0], 0.0, 1.0)) * img_w
+    cy = float(np.clip(target[1], 0.0, 1.0)) * img_h
     angle = 0.5 * float(np.arctan2(target[2], target[3]))
-    width = target[4] * img_w
-    height = target[5] * img_h
+    width = float(abs(target[4])) * img_w
+    height = float(abs(target[5])) * img_h
     return _build_corners(cx, cy, angle, width, height)
 
 
 def _draw_grasp(img: Image.Image, corners: np.ndarray, color: tuple) -> None:
     draw = ImageDraw.Draw(img)
+    if not np.isfinite(corners).all():
+        return
     pts = [tuple(p) for p in corners.tolist()]
     draw.line(pts + [pts[0]], fill=color, width=2)
 
@@ -83,7 +86,7 @@ def main():
     if args.head_path:
         model.grasp_head.load_state_dict(torch.load(args.head_path, map_location="cpu"))
 
-    processor = None
+    processor = AutoImageProcessor.from_pretrained(model_name)
     train_ds, val_ds = load_cornell_grasp(args.data_dir, processor=processor, val_split=0.2, seed=args.seed)
     ds = val_ds if args.split == "val" else train_ds
 
