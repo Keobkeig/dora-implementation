@@ -38,6 +38,7 @@ from transformers import (
     AutoFeatureExtractor,
     EvalPrediction,
     Trainer,
+    TrainerCallback,
     TrainingArguments,
     Wav2Vec2ForSequenceClassification,
     set_seed,
@@ -271,6 +272,120 @@ def save_lora_adapter(model: torch.nn.Module, path: str):
     torch.save({"lora_state": lora_state}, path)
 
 
+class AdapterStatsCallback(TrainerCallback):
+    def __init__(self, model: torch.nn.Module, output_dir: str):
+        self.model = model
+        self.output_dir = output_dir
+        self.records: list = []
+        self._last_train_loss: float = float("nan")
+        self._init_magnitudes: dict = {}
+
+    def on_train_begin(self, args, state, control, **kwargs):
+        for name, m in self.model.named_modules():
+            if hasattr(m, "magnitude") and hasattr(m, "lora_A"):
+                with torch.no_grad():
+                    self._init_magnitudes[name] = m.magnitude.float().cpu().clone()
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        if logs and "loss" in logs:
+            self._last_train_loss = float(logs["loss"])
+
+    def on_evaluate(self, args, state, control, metrics=None, **kwargs):
+        epoch = state.epoch or 0.0
+        eval_metric = float(metrics.get("eval_accuracy", float("nan")))
+        eval_loss = float(metrics.get("eval_loss", float("nan")))
+
+        lora_norms, mag_drifts, mag_means, mag_grad_norms = [], [], [], []
+        for name, m in self.model.named_modules():
+            if hasattr(m, "lora_A") and hasattr(m, "lora_B"):
+                with torch.no_grad():
+                    lora_norms.append((m.lora_B.float() @ m.lora_A.float()).norm().item())
+                    if hasattr(m, "magnitude"):
+                        mag = m.magnitude.float().cpu()
+                        mag_means.append(mag.mean().item())
+                        m0 = self._init_magnitudes.get(name)
+                        if m0 is not None and m0.norm().item() > 0:
+                            mag_drifts.append((mag - m0).norm().item() / m0.norm().item())
+                if hasattr(m, "magnitude") and m.magnitude.grad is not None:
+                    mag_grad_norms.append(m.magnitude.grad.float().norm().item())
+
+        self.records.append({
+            "epoch":               round(epoch, 2),
+            "eval_metric":         round(eval_metric, 6),
+            "eval_loss":           round(eval_loss, 6),
+            "train_loss":          round(self._last_train_loss, 6),
+            "lora_norm_mean":      round(float(np.mean(lora_norms)),     6) if lora_norms     else None,
+            "lora_norm_std":       round(float(np.std(lora_norms)),      6) if lora_norms     else None,
+            "magnitude_rel_drift": round(float(np.mean(mag_drifts)),     6) if mag_drifts     else None,
+            "magnitude_mean":      round(float(np.mean(mag_means)),      6) if mag_means      else None,
+            "magnitude_grad_norm": round(float(np.mean(mag_grad_norms)), 6) if mag_grad_norms else None,
+            "n_adapter_layers":    len(lora_norms),
+        })
+
+    def on_train_end(self, args, state, control, **kwargs):
+        out = os.path.join(self.output_dir, "adapter_stats.json")
+        with open(out, "w") as f:
+            json.dump(self.records, f, indent=2)
+        logger.info(f"Adapter stats → {out}")
+
+        layer_rows = self._per_layer_stats()
+        if layer_rows:
+            layer_path = os.path.join(self.output_dir, "adapter_layer_stats.json")
+            with open(layer_path, "w") as f:
+                json.dump(layer_rows, f, indent=2)
+            logger.info(f"Per-layer adapter stats → {layer_path}  ({len(layer_rows)} layers)")
+
+    def _per_layer_stats(self) -> list:
+        rows = []
+        for name, module in self.model.named_modules():
+            if not (hasattr(module, "lora_A") and hasattr(module, "lora_B")
+                    and hasattr(module, "base_weight")
+                    and hasattr(module, "get_effective_weight")):
+                continue
+            method_name = "dora" if hasattr(module, "magnitude") else "lora"
+            with torch.no_grad():
+                W0 = module.base_weight.detach().float()
+                W_eff = module.get_effective_weight().detach().float()
+                dW = W_eff - W0
+                w0 = W0.flatten()
+                dw = dW.flatten()
+                w0_norm = float(torch.linalg.norm(w0).item())
+                dw_norm = float(torch.linalg.norm(dw).item())
+                if w0_norm > 0 and dw_norm > 0:
+                    cos = float((torch.dot(w0, dw) / (w0_norm * dw_norm)).clamp(-1.0, 1.0).item())
+                    angle_deg = math.degrees(math.acos(cos))
+                else:
+                    angle_deg = float("nan")
+                rel = dw_norm / w0_norm if w0_norm > 0 else float("nan")
+            rows.append({
+                "method": method_name,
+                "layer": name,
+                "angle_deg": round(angle_deg, 4),
+                "relative_update_norm": round(rel, 6),
+            })
+        return rows
+
+
+class AdapterCheckpointCallback(TrainerCallback):
+    def __init__(self, model: torch.nn.Module, output_dir: str, method: str):
+        self.model = model
+        self.output_dir = output_dir
+        self.method = method
+
+    def on_evaluate(self, args, state, control, metrics=None, **kwargs):
+        if self.method == "dora":
+            out = os.path.join(self.output_dir, "dora_adapter_latest.pt")
+            DoRAStateManager.save_dora_state(self.model, out, include_base_weights=False)
+        elif self.method == "lora":
+            lora_state = {
+                name: {"lora_A": m.lora_A.data, "lora_B": m.lora_B.data}
+                for name, m in self.model.named_modules()
+                if isinstance(m, LoRALinear)
+            }
+            out = os.path.join(self.output_dir, "lora_adapter_latest.pt")
+            torch.save({"lora_state": lora_state}, out)
+
+
 def main():
     args = parse_args()
     set_seed(args.seed)
@@ -390,6 +505,11 @@ def main():
         remove_unused_columns=False,
     )
 
+    callbacks = []
+    if args.method in ("dora", "lora"):
+        callbacks.append(AdapterStatsCallback(model, args.output_dir))
+        callbacks.append(AdapterCheckpointCallback(model, args.output_dir, args.method))
+
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -398,6 +518,7 @@ def main():
         processing_class=feature_extractor,
         data_collator=DataCollatorAudioClassification(feature_extractor),
         compute_metrics=build_compute_metrics(),
+        callbacks=callbacks,
     )
 
     logger.info("Training...")

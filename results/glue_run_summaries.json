@@ -1,8 +1,19 @@
 [
   {
     "run": "glue_mrpc_roberta_dora_r8",
-    "adapter_stats_last": null,
-    "adapter_stats_source": null
+    "adapter_stats_last": {
+      "epoch": 5.0,
+      "eval_metric": 0.88155,
+      "eval_loss": 0.369456,
+      "train_loss": 0.269951,
+      "lora_norm_mean": 0.571394,
+      "lora_norm_std": 0.136983,
+      "magnitude_rel_drift": 0.003994,
+      "magnitude_mean": 1.722136,
+      "magnitude_grad_norm": null,
+      "n_adapter_layers": 36
+    },
+    "adapter_stats_source": "C:\\Users\\Owner\\Documents\\dora-implementation\\results\\glue_mrpc_roberta_dora_r8\\adapter_stats.json"
   },
   {
     "run": "glue_mrpc_roberta_full",
@@ -46,6 +57,32 @@
   },
   {
     "run": "glue_mrpc_roberta_lora_r8",
+    "adapter_stats_last": {
+      "epoch": 5.0,
+      "eval_metric": 0.8586,
+      "eval_loss": 0.379226,
+      "train_loss": 0.28545,
+      "lora_norm_mean": 0.564154,
+      "lora_norm_std": 0.139462,
+      "magnitude_rel_drift": null,
+      "magnitude_mean": null,
+      "magnitude_grad_norm": null,
+      "n_adapter_layers": 36
+    },
+    "adapter_stats_source": "C:\\Users\\Owner\\Documents\\dora-implementation\\results\\glue_mrpc_roberta_lora_r8\\adapter_stats.json"
+  },
+  {
+    "run": "glue_rte_roberta_dora_r16",
+    "adapter_stats_last": null,
+    "adapter_stats_source": null
+  },
+  {
+    "run": "glue_rte_roberta_dora_r2",
+    "adapter_stats_last": null,
+    "adapter_stats_source": null
+  },
+  {
+    "run": "glue_rte_roberta_dora_r4",
     "adapter_stats_last": null,
     "adapter_stats_source": null
   },
@@ -53,16 +90,17 @@
     "run": "glue_rte_roberta_dora_r8",
     "adapter_stats_last": {
       "epoch": 5.0,
-      "eval_metric": 0.707581,
-      "eval_loss": 0.560301,
-      "train_loss": 0.473452,
-      "lora_norm_mean": 0.503017,
-      "lora_norm_std": 0.080784,
-      "magnitude_rel_drift": 0.0,
-      "magnitude_mean": 1.722326,
+      "eval_metric": 0.700361,
+      "eval_loss": 0.593246,
+      "train_loss": 0.530864,
+      "lora_norm_mean": 0.510536,
+      "lora_norm_std": 0.099953,
+      "magnitude_rel_drift": 0.003635,
+      "magnitude_mean": 1.722725,
+      "magnitude_grad_norm": null,
       "n_adapter_layers": 36
     },
-    "adapter_stats_source": "C:\\Users\\Owner\\Documents\\dora-implementation\\results\\glue_rte_roberta_dora_r8_stats\\adapter_stats.json"
+    "adapter_stats_source": "C:\\Users\\Owner\\Documents\\dora-implementation\\results\\glue_rte_roberta_dora_r8\\adapter_stats.json"
   },
   {
     "run": "glue_rte_roberta_full",
@@ -105,19 +143,35 @@
     "adapter_stats_source": "C:\\Users\\Owner\\Documents\\dora-implementation\\results\\glue_rte_roberta_large_lora_r8\\adapter_stats.json"
   },
   {
+    "run": "glue_rte_roberta_lora_r16",
+    "adapter_stats_last": null,
+    "adapter_stats_source": null
+  },
+  {
+    "run": "glue_rte_roberta_lora_r2",
+    "adapter_stats_last": null,
+    "adapter_stats_source": null
+  },
+  {
+    "run": "glue_rte_roberta_lora_r4",
+    "adapter_stats_last": null,
+    "adapter_stats_source": null
+  },
+  {
     "run": "glue_rte_roberta_lora_r8",
     "adapter_stats_last": {
       "epoch": 5.0,
-      "eval_metric": 0.693141,
-      "eval_loss": 0.570351,
-      "train_loss": 0.506489,
-      "lora_norm_mean": 0.493608,
-      "lora_norm_std": 0.058463,
+      "eval_metric": 0.66065,
+      "eval_loss": 0.637028,
+      "train_loss": 0.585193,
+      "lora_norm_mean": 0.450873,
+      "lora_norm_std": 0.072519,
       "magnitude_rel_drift": null,
       "magnitude_mean": null,
+      "magnitude_grad_norm": null,
       "n_adapter_layers": 36
     },
-    "adapter_stats_source": "C:\\Users\\Owner\\Documents\\dora-implementation\\results\\glue_rte_roberta_lora_r8_stats\\adapter_stats.json"
+    "adapter_stats_source": "C:\\Users\\Owner\\Documents\\dora-implementation\\results\\glue_rte_roberta_lora_r8\\adapter_stats.json"
   },
   {
     "run": "glue_sst2_1b_dora_r8",
@@ -141,8 +195,19 @@
   },
   {
     "run": "glue_sst2_roberta_dora_r8",
-    "adapter_stats_last": null,
-    "adapter_stats_source": null
+    "adapter_stats_last": {
+      "epoch": 5.0,
+      "eval_metric": 0.932339,
+      "eval_loss": 0.227684,
+      "train_loss": 0.199882,
+      "lora_norm_mean": 1.092243,
+      "lora_norm_std": 0.220281,
+      "magnitude_rel_drift": 0.0,
+      "magnitude_mean": 1.722326,
+      "magnitude_grad_norm": null,
+      "n_adapter_layers": 36
+    },
+    "adapter_stats_source": "C:\\Users\\Owner\\Documents\\dora-implementation\\results\\glue_sst2_roberta_dora_r8\\adapter_stats.json"
   },
   {
     "run": "glue_sst2_roberta_full",
@@ -186,7 +251,18 @@
   },
   {
     "run": "glue_sst2_roberta_lora_r8",
-    "adapter_stats_last": null,
-    "adapter_stats_source": null
+    "adapter_stats_last": {
+      "epoch": 5.0,
+      "eval_metric": 0.933486,
+      "eval_loss": 0.215181,
+      "train_loss": 0.209515,
+      "lora_norm_mean": 1.066732,
+      "lora_norm_std": 0.211486,
+      "magnitude_rel_drift": null,
+      "magnitude_mean": null,
+      "magnitude_grad_norm": null,
+      "n_adapter_layers": 36
+    },
+    "adapter_stats_source": "C:\\Users\\Owner\\Documents\\dora-implementation\\results\\glue_sst2_roberta_lora_r8\\adapter_stats.json"
   }
 ]
