@@ -27,6 +27,7 @@ dependencies = [
   "bitsandbytes>=0.43.0",
   "timm>=0.9.10,<1.0.0",
   "lerobot>=0.3.3",
+  "soundfile>=0.12.1",
 ]
 
 [project.optional-dependencies]

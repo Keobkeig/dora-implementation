@@ -192,6 +192,44 @@ Report saved to `results/openvla_dora_report.txt`.
 
 ---
 
+### 5 · Speech Commands — Wav2Vec2 Keyword Spotting
+
+Fine-tunes `facebook/wav2vec2-base` on `google/speech_commands` for keyword spotting. The default setup uses the standard 12-class label space: `yes/no/up/down/left/right/on/off/stop/go/_unknown_/_silence_`.
+
+```powershell
+# From code/ directory
+uv run scripts/train_speech_commands.py --method dora --rank 8 --alpha 16
+```
+
+On Apple Silicon, start with a subset to estimate training time before running the full dataset:
+
+```powershell
+uv run scripts/train_speech_commands.py `
+  --method dora `
+  --rank 8 `
+  --alpha 16 `
+  --epochs 1 `
+  --batch_size 8 `
+  --max_train_samples 2000 `
+  --max_eval_samples 500 `
+  --max_test_samples 500
+```
+
+The script reports validation accuracy, validation loss, test accuracy, trainable parameters, and measured training time. Results are saved to `results/speech_commands_wav2vec2-base_dora_r8/metrics.json`; adapter weights are saved to `dora_adapter.pt` and the Wav2Vec2 classification head is saved to `classification_head.pt`.
+
+To continue from a saved checkpoint, pass the checkpoint directory and set `--epochs` to the total target epoch count:
+
+```powershell
+uv run scripts/train_speech_commands.py `
+  --method dora `
+  --rank 8 `
+  --alpha 16 `
+  --epochs 2 `
+  --resume_from_checkpoint ../results/speech_commands_wav2vec2-base_dora_r8/checkpoint-10606
+```
+
+---
+
 ## Repository Layout
 
 ```
@@ -205,6 +243,7 @@ dora-implementation/
 │   ├── scripts/
 │   │   ├── train_glue.py          # GLUE fine-tuning (LLaMA / RoBERTa)
 │   │   ├── train_grasp.py         # Cornell Grasp (ViT / SigLIP)
+│   │   ├── train_speech_commands.py # Wav2Vec2 keyword spotting
 │   │   ├── openvla_demo.py        # OpenVLA architecture verification
 │   │   ├── run_roberta_experiments.sh
 │   │   ├── run_grasp_experiments.sh
@@ -244,6 +283,7 @@ dora-implementation/
 | `roberta` | FacebookAI/roberta-base | 125M |
 | `vit` | google/vit-base-patch16-224 | 87M |
 | `siglip` | google/siglip-base-patch16-224 | 93M |
+| `wav2vec2-base` | facebook/wav2vec2-base | 95M |
 
 ---
 

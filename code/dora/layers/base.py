@@ -140,7 +140,10 @@ class DoRAModule:
     @staticmethod
     def is_dora_layer(layer: nn.Module) -> bool:
         """Check if a layer is a DoRA layer."""
-        return isinstance(layer, DoRALayer)
+        return isinstance(layer, DoRALayer) or all(
+            hasattr(layer, attr)
+            for attr in ("lora_A", "lora_B", "magnitude", "base_weight", "get_effective_weight")
+        )
 
     @staticmethod
     def get_dora_layers(model: nn.Module) -> Dict[str, DoRALayer]:
