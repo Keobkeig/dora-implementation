@@ -2,121 +2,121 @@
   {
     "filename": "sample_00_off.wav",
     "true_label": "off",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "off",
+    "confidence": 0.9997
   },
   {
     "filename": "sample_01_off.wav",
     "true_label": "off",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "off",
+    "confidence": 0.9997
   },
   {
     "filename": "sample_02__silence_.wav",
     "true_label": "_silence_",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "_unknown_",
+    "confidence": 0.9091
   },
   {
     "filename": "sample_03__unknown_.wav",
     "true_label": "_unknown_",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "_unknown_",
+    "confidence": 1.0
   },
   {
     "filename": "sample_04_on.wav",
     "true_label": "on",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "on",
+    "confidence": 0.9992
   },
   {
     "filename": "sample_05__unknown_.wav",
     "true_label": "_unknown_",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "_unknown_",
+    "confidence": 1.0
   },
   {
     "filename": "sample_06_right.wav",
     "true_label": "right",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "right",
+    "confidence": 0.9999
   },
   {
     "filename": "sample_07_down.wav",
     "true_label": "down",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "down",
+    "confidence": 0.9997
   },
   {
     "filename": "sample_08_stop.wav",
     "true_label": "stop",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "stop",
+    "confidence": 1.0
   },
   {
     "filename": "sample_09_no.wav",
     "true_label": "no",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "no",
+    "confidence": 0.9994
   },
   {
     "filename": "sample_10__silence_.wav",
     "true_label": "_silence_",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "_unknown_",
+    "confidence": 0.9796
   },
   {
     "filename": "sample_11_right.wav",
     "true_label": "right",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "right",
+    "confidence": 0.9999
   },
   {
     "filename": "sample_12_right.wav",
     "true_label": "right",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "right",
+    "confidence": 0.9998
   },
   {
     "filename": "sample_13_stop.wav",
     "true_label": "stop",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "stop",
+    "confidence": 0.9999
   },
   {
     "filename": "sample_14__silence_.wav",
     "true_label": "_silence_",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "_unknown_",
+    "confidence": 0.9489
   },
   {
     "filename": "sample_15_no.wav",
     "true_label": "no",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "no",
+    "confidence": 0.9997
   },
   {
     "filename": "sample_16_up.wav",
     "true_label": "up",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "up",
+    "confidence": 0.9993
   },
   {
     "filename": "sample_17_off.wav",
     "true_label": "off",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "off",
+    "confidence": 0.9868
   },
   {
     "filename": "sample_18__silence_.wav",
     "true_label": "_silence_",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "_unknown_",
+    "confidence": 0.9651
   },
   {
     "filename": "sample_19_right.wav",
     "true_label": "right",
-    "predicted_label": null,
-    "confidence": null
+    "predicted_label": "right",
+    "confidence": 0.9999
   }
 ]

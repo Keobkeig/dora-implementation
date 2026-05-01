@@ -558,6 +558,7 @@ here (74.8%) but DoRA (88.2%) and LoRA (85.9%) still outperform it significantly
                     headers=["Sentence", "Label"],
                     datatype=["str", "str"],
                     col_count=(2, "fixed"),
+                    wrap=True,
                     interactive=False,
                 )
             with gr.Accordion("RTE — Textual Entailment samples", open=False):
@@ -566,6 +567,7 @@ here (74.8%) but DoRA (88.2%) and LoRA (85.9%) still outperform it significantly
                     headers=["Premise", "Hypothesis", "Label"],
                     datatype=["str", "str", "str"],
                     col_count=(3, "fixed"),
+                    wrap=True,
                     interactive=False,
                 )
             with gr.Accordion("MRPC — Paraphrase Detection samples", open=False):
@@ -574,6 +576,7 @@ here (74.8%) but DoRA (88.2%) and LoRA (85.9%) still outperform it significantly
                     headers=["Sentence 1", "Sentence 2", "Label"],
                     datatype=["str", "str", "str"],
                     col_count=(3, "fixed"),
+                    wrap=True,
                     interactive=False,
                 )
 
@@ -635,10 +638,10 @@ grasp rectangle (green) and the DoRA-predicted grasp rectangle (red). A predicti
 if IoU >= 0.25 and the angle error is within 30 degrees.
 """)
             gr.Markdown("#### Push-T — DoRA action predictions (SmolVLM-256M)")
-            vla_gallery_dora = gr.Gallery(label="Push-T DoRA", columns=5, rows=2, height=520)
+            vla_gallery_dora = gr.Gallery(label="Push-T DoRA", columns=5, rows=2, height=900)
             gr.Markdown(METH_VLA)
             gr.Markdown("#### Cornell Grasp — DoRA predictions (SigLIP backbone)")
-            grasp_siglip_dora = gr.Gallery(label="SigLIP DoRA", columns=5, rows=2, height=520)
+            grasp_siglip_dora = gr.Gallery(label="SigLIP DoRA", columns=5, rows=2, height=900)
             gr.Markdown(METH_GRASP)
 
         # ── Tab 4: OpenVLA ────────────────────────────────────────────────
@@ -662,6 +665,7 @@ Model loaded to CPU in bfloat16. Forward pass verified.
                         ],
                         headers=["Property", "Value"],
                         label="OpenVLA-7B + DoRA (rank=8) Summary",
+                        wrap=True,
                         interactive=False,
                     )
             gr.Markdown(FINDING_4)
