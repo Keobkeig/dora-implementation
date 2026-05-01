@@ -135,6 +135,16 @@ def _load_speech_manifest(subdir: str):
     return []
 
 
+def _load_rank_analysis() -> dict:
+    path = RESULTS_DIR / "rank_analysis_summary.json"
+    if path.exists():
+        try:
+            return json.loads(path.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
 def _load_speech_metrics() -> dict:
     path = RESULTS_DIR / "speech_commands_wav2vec2-base_dora_r8" / "metrics.json"
     if path.exists():
@@ -404,6 +414,55 @@ def fig_speech_commands():
     fig.tight_layout()
     return fig
 
+def fig_rank_analysis():
+    data = _load_rank_analysis()
+    runs = data.get("runs", [])
+
+    fig, axes = plt.subplots(1, 2, figsize=(FIG_W * 2, FIG_H))
+
+    # Left: metric vs rank line chart
+    for method, color, label in [("dora", COLORS["DoRA"], "DoRA"), ("lora", COLORS["LoRA"], "LoRA")]:
+        pts = sorted(
+            [(r["rank"], r["metric_pct"]) for r in runs if r["method"] == method and r["metric_pct"] is not None],
+            key=lambda x: x[0],
+        )
+        if pts:
+            xs, ys = zip(*pts)
+            axes[0].plot(xs, ys, "o-", label=label, color=color, linewidth=2.5, markersize=7)
+            for x, y in zip(xs, ys):
+                axes[0].annotate(f"{y:.1f}%", (x, y), textcoords="offset points",
+                                 xytext=(0, 8), ha="center", fontsize=7.5, color=color)
+
+    axes[0].set_xticks(data.get("ranks", []))
+    axes[0].set_xscale("log", base=2)
+    axes[0].xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    axes[0].legend(fontsize=10)
+    _style(axes[0], "MRPC Combined Score vs Rank\n(RoBERTa-base, alpha = 2 × rank)",
+           "Rank (log2)", "Combined F1+Acc (%)")
+
+    # Right: DoRA - LoRA delta per rank (shows where DoRA gains/loses vs LoRA)
+    dora_map = {r["rank"]: r["metric_pct"] for r in runs if r["method"] == "dora" and r["metric_pct"] is not None}
+    lora_map = {r["rank"]: r["metric_pct"] for r in runs if r["method"] == "lora" and r["metric_pct"] is not None}
+    shared_ranks = sorted(set(dora_map) & set(lora_map))
+    if shared_ranks:
+        deltas = [dora_map[r] - lora_map[r] for r in shared_ranks]
+        bar_colors = [COLORS["DoRA"] if d >= 0 else COLORS["LoRA"] for d in deltas]
+        axes[1].bar([str(r) for r in shared_ranks], deltas, color=bar_colors, alpha=0.88, edgecolor="white")
+        axes[1].axhline(0, color="gray", linewidth=0.8, linestyle="--")
+        for i, (r, d) in enumerate(zip(shared_ranks, deltas)):
+            axes[1].text(i, d + (0.1 if d >= 0 else -0.25), f"{d:+.2f}",
+                         ha="center", va="bottom" if d >= 0 else "top", fontsize=8)
+        _style(axes[1], "DoRA − LoRA Gap per Rank\n(positive = DoRA wins)",
+               "Rank", "Delta (%)")
+    else:
+        axes[1].text(0.5, 0.5, "Run export_rank_analysis.py to populate",
+                     ha="center", va="center", transform=axes[1].transAxes, fontsize=10, color="gray")
+        axes[1].set_axis_off()
+
+    fig.tight_layout()
+    return fig
+
+
 # ---------------------------------------------------------------------------
 # Gradio UI
 # ---------------------------------------------------------------------------
@@ -613,6 +672,15 @@ here (74.8%) but DoRA (88.2%) and LoRA (85.9%) still outperform it significantly
                 traj_plot  = gr.Plot(label="Directional Update Norm over Training")
             gr.Markdown(FINDING_2)
 
+            gr.Markdown("---")
+            gr.Markdown("""
+### Rank Analysis — MRPC (RoBERTa-base)
+DoRA vs LoRA combined score (F1 + accuracy) / 2 across ranks 2 → 32 with alpha = 2 × rank.
+The gap chart shows where DoRA outperforms LoRA and by how much at each rank budget.
+""")
+            with gr.Row():
+                rank_plot = gr.Plot(label="Rank Analysis")
+
         # ── Tab 4: Vision / Grasping ──────────────────────────────────────
         with gr.Tab("Cornell Grasp"):
             gr.Markdown("""
@@ -737,6 +805,7 @@ uv run scripts/openvla_demo.py
             fig_scale_study(),
             fig_training_curves(),
             fig_weight_trajectory(),
+            fig_rank_analysis(),
             fig_grasp_results(),
             fig_speech_commands(),
             _load_sample_images("pusht_samples_dora"),
@@ -758,6 +827,7 @@ uv run scripts/openvla_demo.py
             scale_plot,
             curve_plot,
             traj_plot,
+            rank_plot,
             grasp_plot,
             speech_plot,
             vla_gallery_dora,
