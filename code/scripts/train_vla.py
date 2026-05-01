@@ -441,6 +441,11 @@ def main():
     else:
         optimizers = (None, None)
 
+    callbacks = []
+    if args.method in ("dora", "lora"):
+        callbacks.append(AdapterStatsCallback(model, args.output_dir))
+        callbacks.append(AdapterCheckpointCallback(model, args.output_dir, args.method))
+
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -448,7 +453,7 @@ def main():
         eval_dataset=eval_ds,
         data_collator=vla_collator,
         compute_metrics=build_compute_metrics(),
-        callbacks=[stats_cb] if args.method in ("dora", "lora") else [],
+        callbacks=callbacks,
         optimizers=optimizers,
     )
 
@@ -473,15 +478,6 @@ def main():
                       for n, m in model.named_modules() if isinstance(m, LoRALinear)}
         torch.save({"lora_state": lora_state},
                    os.path.join(args.output_dir, "lora_adapter.pt"))
-
-    torch.save(model.action_head.state_dict(),
-               os.path.join(args.output_dir, "action_head.pt"))
-    return results
-
-
-if __name__ == "__main__":
-    main()
-t"))
 
     torch.save(model.action_head.state_dict(),
                os.path.join(args.output_dir, "action_head.pt"))

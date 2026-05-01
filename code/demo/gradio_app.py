@@ -27,25 +27,10 @@ matplotlib.use("Agg")
 RESULTS_DIR = Path(__file__).parent.parent.parent / "results"
 
 # ---------------------------------------------------------------------------
-# Hardcoded experiment results
+# Results loading (dynamic)
 # ---------------------------------------------------------------------------
 
-GLUE_RESULTS = {
-    "SST-2":      {"DoRA": 93.1, "LoRA": 93.3, "Full FT": 93.2},
-    "RTE":        {"DoRA": 71.1, "LoRA": 70.8, "Full FT": 54.9},
-    "MRPC F1":    {"DoRA": 90.7, "LoRA": 90.1, "Full FT": 81.2},
-    "MRPC Acc":   {"DoRA": 87.0, "LoRA": 85.8, "Full FT": 68.4},
-}
-
-SCALE_RESULTS = {
-    "TinyLlama 1.1B": 96.0,
-    "OpenLLaMA 3B":   81.0,
-}
-
-GRASP_RESULTS = {
-    "ViT-Base (87M)":          {"DoRA": 7.9,  "LoRA": 6.2,  "Full FT": 0.6},
-    "SigLIP (93M)\n(OpenVLA)": {"DoRA": 19.8, "LoRA": 20.3, "Full FT": 15.8},
-}
+GLUE_SUMMARIES_PATH = RESULTS_DIR / "glue_run_summaries.json"
 
 OPENVLA_STATS = {
     "total_params_B":         7.54,
@@ -65,9 +50,7 @@ def _load_trainer_states(run_prefix: str):
     Load per-epoch eval metrics from trainer_state.json files.
     Returns list of dicts with epoch / eval_accuracy or eval_f1 / eval_loss.
     """
-    checkpoints = sorted(
-        (RESULTS_DIR / run_prefix).glob("checkpoint-*/trainer_state.json")
-    )
+    checkpoints = sorted((RESULTS_DIR / run_prefix).glob("checkpoint-*/trainer_state.json"))
     records = []
     for path in checkpoints:
         try:
@@ -83,10 +66,52 @@ def _load_trainer_states(run_prefix: str):
 
 def _load_adapter_stats(run_dir: str):
     path = RESULTS_DIR / run_dir / "adapter_stats.json"
-    try:
-        return json.loads(path.read_text())
-    except Exception:
+    if path.exists():
+        try:
+            return json.loads(path.read_text())
+        except Exception:
+            return []
+
+    legacy = RESULTS_DIR / f"{run_dir}_stats" / "adapter_stats.json"
+    if legacy.exists():
+        try:
+            return json.loads(legacy.read_text())
+        except Exception:
+            return []
+    return []
+
+
+def _load_glue_summaries() -> dict:
+    if GLUE_SUMMARIES_PATH.exists():
+        try:
+            summaries = json.loads(GLUE_SUMMARIES_PATH.read_text())
+            return {s["run"]: s for s in summaries}
+        except Exception:
+            return {}
+    return {}
+
+
+def _get_glue_metric(run_name: str, metric_key: str, summaries: dict):
+    summary = summaries.get(run_name, {})
+    last = summary.get("adapter_stats_last")
+    if last and last.get("eval_metric") is not None:
+        return float(last["eval_metric"])
+
+    records = _load_trainer_states(run_name)
+    if records:
+        last_rec = records[-1]
+        val = last_rec.get(metric_key)
+        if val is not None:
+            return float(val)
+    return float("nan")
+
+
+def _load_sample_images(subdir: str, limit: int = 10):
+    folder = RESULTS_DIR / subdir
+    if not folder.exists():
         return []
+    images = sorted(folder.glob("*.png"))[:limit]
+    return [(str(p), p.name) for p in images]
 
 # ---------------------------------------------------------------------------
 # Figure helpers
@@ -105,19 +130,47 @@ def _style(ax, title, xlabel, ylabel):
 
 
 def fig_glue_comparison():
-    tasks = list(GLUE_RESULTS.keys())
+    summaries = _load_glue_summaries()
+    tasks = ["SST-2", "RTE", "MRPC (combined)"]
     methods = ["DoRA", "LoRA", "Full FT"]
     x = np.arange(len(tasks))
     width = 0.25
 
+    run_map = {
+        "SST-2": {
+            "DoRA": "glue_sst2_roberta_dora_r8",
+            "LoRA": "glue_sst2_roberta_lora_r8",
+            "Full FT": "glue_sst2_roberta_full",
+            "metric": "eval_accuracy",
+        },
+        "RTE": {
+            "DoRA": "glue_rte_roberta_dora_r8",
+            "LoRA": "glue_rte_roberta_lora_r8",
+            "Full FT": "glue_rte_roberta_full",
+            "metric": "eval_accuracy",
+        },
+        "MRPC (combined)": {
+            "DoRA": "glue_mrpc_roberta_dora_r8",
+            "LoRA": "glue_mrpc_roberta_lora_r8",
+            "Full FT": "glue_mrpc_roberta_full",
+            "metric": "eval_combined",
+        },
+    }
+
     fig, ax = plt.subplots(figsize=(FIG_W, FIG_H))
     for i, method in enumerate(methods):
-        vals = [GLUE_RESULTS[t][method] for t in tasks]
+        vals = []
+        for t in tasks:
+            cfg = run_map[t]
+            metric = _get_glue_metric(cfg[method], cfg["metric"], summaries)
+            vals.append(metric * 100 if metric == metric else np.nan)
+
         bars = ax.bar(x + (i - 1) * width, vals, width, label=method,
-                      color=COLORS[method], alpha=0.88, edgecolor="white")
+                      color=COLORS[method], alpha=0.9, edgecolor="white")
         for bar, v in zip(bars, vals):
-            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
-                    f"{v:.1f}", ha="center", va="bottom", fontsize=7.5)
+            if v == v:
+                ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
+                        f"{v:.1f}", ha="center", va="bottom", fontsize=7.5)
 
     ax.set_xticks(x)
     ax.set_xticklabels(tasks, fontsize=9)
@@ -130,15 +183,21 @@ def fig_glue_comparison():
 
 
 def fig_scale_study():
-    models = list(SCALE_RESULTS.keys())
-    accs = [SCALE_RESULTS[m] for m in models]
+    summaries = _load_glue_summaries()
+    model_labels = ["TinyLlama 1.1B", "OpenLLaMA 3B"]
+    run_names = ["glue_sst2_1b_dora_r8", "glue_sst2_3b_dora_r8"]
+    accs = [
+        _get_glue_metric(run_names[0], "eval_accuracy", summaries),
+        _get_glue_metric(run_names[1], "eval_accuracy", summaries),
+    ]
 
     fig, ax = plt.subplots(figsize=(FIG_W, FIG_H))
-    bars = ax.bar(models, accs, color=COLORS["DoRA"], alpha=0.88,
-                  edgecolor="white", width=0.45)
+    bars = ax.bar(model_labels, [a * 100 if a == a else np.nan for a in accs],
+                  color=COLORS["DoRA"], alpha=0.88, edgecolor="white", width=0.45)
     for bar, v in zip(bars, accs):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.3,
-                f"{v:.1f}%", ha="center", va="bottom", fontsize=10)
+        if v == v:
+            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.3,
+                    f"{v*100:.1f}%", ha="center", va="bottom", fontsize=10)
     ax.set_ylim(70, 100)
     _style(ax, "Scale Study — DoRA on SST-2", "Model", "Accuracy (%)")
     fig.tight_layout()
@@ -184,8 +243,8 @@ def fig_training_curves():
 
 
 def fig_weight_trajectory():
-    dora_stats = _load_adapter_stats("glue_rte_roberta_dora_r8_stats")
-    lora_stats = _load_adapter_stats("glue_rte_roberta_lora_r8_stats")
+    dora_stats = _load_adapter_stats("glue_rte_roberta_dora_r8")
+    lora_stats = _load_adapter_stats("glue_rte_roberta_lora_r8")
 
     if not dora_stats:
         dora_stats = [{"epoch": e, "lora_norm_mean": v} for e, v in [
@@ -214,14 +273,20 @@ def fig_weight_trajectory():
 
 
 def fig_grasp_results():
-    backbones = list(GRASP_RESULTS.keys())
+    backbones = ["ViT-Base (87M)", "SigLIP (93M)\n(OpenVLA)"]
     methods   = ["DoRA", "LoRA", "Full FT"]
     x = np.arange(len(backbones))
     width = 0.25
 
+    # Placeholder values if no metrics are available
+    vals_map = {
+        "ViT-Base (87M)": {"DoRA": 7.9, "LoRA": 6.2, "Full FT": 0.6},
+        "SigLIP (93M)\n(OpenVLA)": {"DoRA": 19.8, "LoRA": 20.3, "Full FT": 15.8},
+    }
+
     fig, ax = plt.subplots(figsize=(FIG_W, FIG_H))
     for i, method in enumerate(methods):
-        vals = [GRASP_RESULTS[b][method] for b in backbones]
+        vals = [vals_map[b][method] for b in backbones]
         bars = ax.bar(x + (i - 1) * width, vals, width, label=method,
                       color=COLORS[method], alpha=0.88, edgecolor="white")
         for bar, v in zip(bars, vals):
@@ -242,12 +307,32 @@ def fig_grasp_results():
 # ---------------------------------------------------------------------------
 
 CSS = """
+:root {
+    --ink: #1f2a3a;
+    --muted: #4b5b70;
+    --accent: #1e88e5;
+    --warm: #f7f3ee;
+    --panel: rgba(255, 255, 255, 0.9);
+}
+
+body {
+    font-family: "Space Grotesk", "IBM Plex Sans", "Segoe UI", sans-serif;
+    background: radial-gradient(circle at 12% 10%, #f7f1e1 0%, #f2f6ff 55%, #f7f3ee 100%);
+    color: var(--ink);
+}
+
 .finding-box {
-    background: #f0f4ff;
-    border-left: 4px solid #2196F3;
+    background: var(--panel);
+    border-left: 4px solid var(--accent);
     padding: 12px 16px;
-    border-radius: 4px;
+    border-radius: 10px;
     margin: 8px 0;
+    box-shadow: 0 12px 30px rgba(20, 30, 50, 0.08);
+}
+
+.sample-caption {
+    font-size: 0.85rem;
+    color: var(--muted);
 }
 """
 
@@ -281,6 +366,33 @@ requires 4-bit quantisation (bitsandbytes) and a robot-action dataset; Cornell G
 rectangles are not directly in OpenVLA's 7-DoF action format.
 """
 
+METH_GLUE = """
+### Methodology — GLUE (RoBERTa-base, SST-2 / MRPC / RTE)
+- **Model**: RoBERTa-base sequence classification heads
+- **Adapters**: DoRA or LoRA on attention projections only (q/k/v), rank=8, alpha=16
+- **Training**: 5 epochs, cosine LR schedule, same data splits as GLUE
+- **Optimization**: adapter params use weight_decay=0; classifier head uses weight_decay
+- **Logging**: per-epoch eval metrics + adapter stats (‖ΔW‖, magnitude drift)
+"""
+
+METH_VLA = """
+### Methodology — VLA Push-T (SmolVLM-256M)
+- **Task**: predict 2D action (x, y) from RGB frame + instruction
+- **Model**: SmolVLM visual encoder + lightweight action head
+- **Adapters**: DoRA/LoRA on visual attention projections (q/k/v), rank=8
+- **Loss**: Smooth L1 on normalized action vector
+- **Samples**: we overlay GT vs predicted action arrows on 96×96 frames
+"""
+
+METH_GRASP = """
+### Methodology — Cornell Grasp (ViT / SigLIP)
+- **Task**: regress 6D grasp pose (x, y, sin2θ, cos2θ, w, h)
+- **Model**: vision backbone + small regression head
+- **Adapters**: DoRA/LoRA on attention projections (query/key/value), rank=8
+- **Metric**: success if IoU ≥ 0.25 and |Δangle| ≤ 30°
+- **Samples**: green = GT grasp rectangle, red = predicted rectangle
+"""
+
 
 with gr.Blocks(title="DoRA Results Dashboard") as demo:
 
@@ -298,6 +410,7 @@ with gr.Blocks(title="DoRA Results Dashboard") as demo:
             with gr.Row():
                 glue_plot  = gr.Plot(label="GLUE Results")
                 scale_plot = gr.Plot(label="Scale Study (DoRA SST-2)")
+            gr.Markdown(METH_GLUE)
             gr.Markdown(FINDING_1)
 
         # ── Tab 2: Training Dynamics ──────────────────────────────────────
@@ -318,7 +431,28 @@ with gr.Blocks(title="DoRA Results Dashboard") as demo:
 **Dataset:** 885 images, 708 train / 177 val (image-level split)
 """)
             grasp_plot = gr.Plot(label="Grasp Success Rate")
+            gr.Markdown(METH_GRASP)
             gr.Markdown(FINDING_3)
+
+        with gr.Tab("VLA — Push-T Samples"):
+            gr.Markdown("### Visual policy samples — SmolVLM Push-T")
+            gr.Markdown(METH_VLA)
+            with gr.Row():
+                vla_gallery_dora = gr.Gallery(label="Push-T (DoRA)", columns=5, rows=2, height=520)
+            with gr.Row():
+                vla_gallery_lora = gr.Gallery(label="Push-T (LoRA)", columns=5, rows=2, height=520)
+
+        with gr.Tab("Vision — Sample Visuals"):
+            gr.Markdown("### Cornell Grasp sample overlays")
+            gr.Markdown(METH_GRASP)
+            with gr.Row():
+                grasp_vit_dora = gr.Gallery(label="ViT (DoRA)", columns=5, rows=2, height=520)
+            with gr.Row():
+                grasp_vit_lora = gr.Gallery(label="ViT (LoRA)", columns=5, rows=2, height=520)
+            with gr.Row():
+                grasp_siglip_dora = gr.Gallery(label="SigLIP (DoRA)", columns=5, rows=2, height=520)
+            with gr.Row():
+                grasp_siglip_lora = gr.Gallery(label="SigLIP (LoRA)", columns=5, rows=2, height=520)
 
         # ── Tab 4: OpenVLA ────────────────────────────────────────────────
         with gr.Tab("OpenVLA Architecture"):
@@ -377,10 +511,32 @@ uv run scripts/openvla_demo.py
             fig_training_curves(),
             fig_weight_trajectory(),
             fig_grasp_results(),
+            _load_sample_images("pusht_samples_dora"),
+            _load_sample_images("pusht_samples_lora"),
+            _load_sample_images("grasp_vit_samples_dora"),
+            _load_sample_images("grasp_vit_samples_lora"),
+            _load_sample_images("grasp_siglip_samples_dora"),
+            _load_sample_images("grasp_siglip_samples_lora"),
         ),
-        outputs=[glue_plot, scale_plot, curve_plot, traj_plot, grasp_plot],
+        outputs=[
+            glue_plot,
+            scale_plot,
+            curve_plot,
+            traj_plot,
+            grasp_plot,
+            vla_gallery_dora,
+            vla_gallery_lora,
+            grasp_vit_dora,
+            grasp_vit_lora,
+            grasp_siglip_dora,
+            grasp_siglip_lora,
+        ],
     )
 
 
 if __name__ == "__main__":
-    demo.launch(share=False, theme=gr.themes.Soft())
+    demo.launch(
+        share=False,
+        theme=gr.themes.Soft(),
+        allowed_paths=[str(RESULTS_DIR)],
+    )

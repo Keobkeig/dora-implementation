@@ -699,6 +699,7 @@ def main():
 
     callbacks = []
     if args.method in ("dora", "lora"):
+        callbacks.append(AdapterStatsCallback(model, args.output_dir, task_cfg["primary_metric"]))
         callbacks.append(AdapterCheckpointCallback(model, args.output_dir, args.method))
 
     trainer = Trainer(

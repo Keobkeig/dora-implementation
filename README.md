@@ -136,6 +136,32 @@ Results saved to `results/glue_<task>_roberta_<dora_r8|lora_r8|full>/`.
 
 ---
 
+### 2.1 · Rank Robustness (DoRA vs LoRA at multiple ranks)
+
+Run a small rank sweep on RoBERTa-base for SST-2 (fastest GLUE task):
+
+```powershell
+# Ranks: 2, 4, 8, 16 (DoRA)
+uv run scripts/train_glue.py --model roberta --task sst2 --method dora --rank 2  --alpha 4  --bf16
+uv run scripts/train_glue.py --model roberta --task sst2 --method dora --rank 4  --alpha 8  --bf16
+uv run scripts/train_glue.py --model roberta --task sst2 --method dora --rank 8  --alpha 16 --bf16
+uv run scripts/train_glue.py --model roberta --task sst2 --method dora --rank 16 --alpha 32 --bf16
+
+# Ranks: 2, 4, 8, 16 (LoRA)
+uv run scripts/train_glue.py --model roberta --task sst2 --method lora --rank 2  --alpha 4  --bf16
+uv run scripts/train_glue.py --model roberta --task sst2 --method lora --rank 4  --alpha 8  --bf16
+uv run scripts/train_glue.py --model roberta --task sst2 --method lora --rank 8  --alpha 16 --bf16
+uv run scripts/train_glue.py --model roberta --task sst2 --method lora --rank 16 --alpha 32 --bf16
+```
+
+Each run writes `results/glue_sst2_roberta_<method>_r<rank>/`. Use the summaries exporter:
+
+```powershell
+uv run scripts/export_glue_metrics.py --results_dir ../results --output ../results/glue_run_summaries.json
+```
+
+---
+
 ### 3 · Vision Extension — Cornell Grasp Dataset (6 runs)
 
 #### Step 1 — Download the dataset
@@ -174,6 +200,26 @@ uv run scripts/train_grasp.py --model siglip --data_dir ../data/cornell_grasps -
 ```
 
 Results saved to `results/grasp_<vit|siglip>_<dora_r8|lora_r8|full>/`.
+
+---
+
+### 3.1 · Export sample visuals (poster)
+
+Push‑T samples (DoRA/LoRA):
+
+```powershell
+uv run scripts/export_vla_samples.py --method dora --adapter_path ../results/vla_pusht_dora_r8/dora_adapter.pt --head_path ../results/vla_pusht_dora_r8/action_head.pt --num_samples 10 --output_dir ../results/pusht_samples_dora
+uv run scripts/export_vla_samples.py --method lora --adapter_path ../results/vla_pusht_lora_r8/lora_adapter.pt --head_path ../results/vla_pusht_lora_r8/action_head.pt --num_samples 10 --output_dir ../results/pusht_samples_lora
+```
+
+Cornell Grasp samples (ViT/SigLIP, DoRA/LoRA):
+
+```powershell
+uv run scripts/export_grasp_samples.py --model vit --data_dir ../data/cornell_grasps --method dora --adapter_path ../results/grasp_vit_dora_r8/dora_adapter.pt --head_path ../results/grasp_vit_dora_r8/grasp_head.pt --num_samples 10 --output_dir ../results/grasp_vit_samples_dora
+uv run scripts/export_grasp_samples.py --model vit --data_dir ../data/cornell_grasps --method lora --adapter_path ../results/grasp_vit_lora_r8/lora_adapter.pt --head_path ../results/grasp_vit_lora_r8/grasp_head.pt --num_samples 10 --output_dir ../results/grasp_vit_samples_lora
+uv run scripts/export_grasp_samples.py --model siglip --data_dir ../data/cornell_grasps --method dora --adapter_path ../results/grasp_siglip_dora_r8/dora_adapter.pt --head_path ../results/grasp_siglip_dora_r8/grasp_head.pt --num_samples 10 --output_dir ../results/grasp_siglip_samples_dora
+uv run scripts/export_grasp_samples.py --model siglip --data_dir ../data/cornell_grasps --method lora --adapter_path ../results/grasp_siglip_lora_r8/lora_adapter.pt --head_path ../results/grasp_siglip_lora_r8/grasp_head.pt --num_samples 10 --output_dir ../results/grasp_siglip_samples_lora
+```
 
 ---
 
@@ -247,7 +293,11 @@ dora-implementation/
 │   │   ├── openvla_demo.py        # OpenVLA architecture verification
 │   │   ├── run_roberta_experiments.sh
 │   │   ├── run_grasp_experiments.sh
-│   │   └── download_cornell_grasp.py
+│   │   ├── download_cornell_grasp.py
+│   │   ├── export_glue_metrics.py
+│   │   ├── export_glue_samples.py
+│   │   ├── export_grasp_samples.py
+│   │   └── export_vla_samples.py
 │   ├── benchmarks/                # DoRA vs LoRA micro-benchmarks
 │   ├── configs/models/            # llama_1b/3b/7b.yaml
 │   ├── training/                  # Custom trainer for commonsense tasks

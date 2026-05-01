@@ -1,0 +1,62 @@
+[
+  {
+    "epoch": 1.0,
+    "eval_metric": 0.512635,
+    "eval_loss": 0.6914,
+    "train_loss": 0.701627,
+    "lora_norm_mean": 0.230184,
+    "lora_norm_std": 0.032016,
+    "magnitude_rel_drift": 0.001706,
+    "magnitude_mean": 1.722435,
+    "magnitude_grad_norm": null,
+    "n_adapter_layers": 36
+  },
+  {
+    "epoch": 2.0,
+    "eval_metric": 0.65704,
+    "eval_loss": 0.613767,
+    "train_loss": 0.670767,
+    "lora_norm_mean": 0.422751,
+    "lora_norm_std": 0.078037,
+    "magnitude_rel_drift": 0.003077,
+    "magnitude_mean": 1.72265,
+    "magnitude_grad_norm": null,
+    "n_adapter_layers": 36
+  },
+  {
+    "epoch": 3.0,
+    "eval_metric": 0.67148,
+    "eval_loss": 0.604555,
+    "train_loss": 0.599722,
+    "lora_norm_mean": 0.487822,
+    "lora_norm_std": 0.093141,
+    "magnitude_rel_drift": 0.003509,
+    "magnitude_mean": 1.722688,
+    "magnitude_grad_norm": null,
+    "n_adapter_layers": 36
+  },
+  {
+    "epoch": 4.0,
+    "eval_metric": 0.707581,
+    "eval_loss": 0.579013,
+    "train_loss": 0.557383,
+    "lora_norm_mean": 0.507652,
+    "lora_norm_std": 0.099065,
+    "magnitude_rel_drift": 0.003619,
+    "magnitude_mean": 1.722719,
+    "magnitude_grad_norm": null,
+    "n_adapter_layers": 36
+  },
+  {
+    "epoch": 5.0,
+    "eval_metric": 0.700361,
+    "eval_loss": 0.593246,
+    "train_loss": 0.530864,
+    "lora_norm_mean": 0.510536,
+    "lora_norm_std": 0.099953,
+    "magnitude_rel_drift": 0.003635,
+    "magnitude_mean": 1.722725,
+    "magnitude_grad_norm": null,
+    "n_adapter_layers": 36
+  }
+]

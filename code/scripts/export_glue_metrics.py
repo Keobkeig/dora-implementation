@@ -19,6 +19,21 @@ def _load_json(path: Path):
         return json.load(f)
 
 
+def _load_adapter_stats(results_dir: Path, run_name: str):
+    run_dir = results_dir / run_name
+    stats = _load_json(run_dir / "adapter_stats.json")
+    if stats is not None:
+        return stats, str(run_dir / "adapter_stats.json")
+
+    # Fallback: check legacy *_stats directory
+    stats_dir = results_dir / f"{run_name}_stats"
+    stats = _load_json(stats_dir / "adapter_stats.json")
+    if stats is not None:
+        return stats, str(stats_dir / "adapter_stats.json")
+
+    return None, None
+
+
 def main():
     ap = argparse.ArgumentParser(description="Export GLUE run summaries")
     ap.add_argument("--results_dir", default="../results")
@@ -32,12 +47,17 @@ def main():
     for run_dir in sorted(results_dir.glob("glue_*")):
         if not run_dir.is_dir():
             continue
-        adapter_stats = _load_json(run_dir / "adapter_stats.json")
+        # Skip legacy *_stats dirs; use them as fallback for the base run.
+        if run_dir.name.endswith("_stats"):
+            continue
+
+        adapter_stats, stats_source = _load_adapter_stats(results_dir, run_dir.name)
         last_stats = adapter_stats[-1] if adapter_stats else None
 
         summary = {
             "run": run_dir.name,
             "adapter_stats_last": last_stats,
+            "adapter_stats_source": stats_source,
         }
         summaries.append(summary)
 
