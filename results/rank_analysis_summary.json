@@ -1,0 +1,548 @@
+{
+  "task": "mrpc",
+  "model": "roberta",
+  "metric": "combined (F1 + accuracy) / 2",
+  "ranks": [
+    2,
+    4,
+    8,
+    16,
+    32
+  ],
+  "methods": [
+    "dora",
+    "lora"
+  ],
+  "runs": [
+    {
+      "run": "glue_mrpc_roberta_dora_r2",
+      "task": "mrpc",
+      "model": "roberta",
+      "method": "dora",
+      "rank": 2,
+      "alpha": 4,
+      "metric": 0.871263,
+      "metric_pct": 87.1263,
+      "epoch_curve": [
+        {
+          "epoch": 1.0,
+          "eval_metric": 0.800724,
+          "eval_loss": 0.502342,
+          "train_loss": 0.602243,
+          "lora_norm_mean": 0.222028,
+          "magnitude_rel_drift": 0.003167
+        },
+        {
+          "epoch": 2.0,
+          "eval_metric": 0.840713,
+          "eval_loss": 0.416614,
+          "train_loss": 0.449056,
+          "lora_norm_mean": 0.30744,
+          "magnitude_rel_drift": 0.00426
+        },
+        {
+          "epoch": 3.0,
+          "eval_metric": 0.849401,
+          "eval_loss": 0.357082,
+          "train_loss": 0.393552,
+          "lora_norm_mean": 0.332744,
+          "magnitude_rel_drift": 0.004569
+        },
+        {
+          "epoch": 4.0,
+          "eval_metric": 0.862204,
+          "eval_loss": 0.360613,
+          "train_loss": 0.364016,
+          "lora_norm_mean": 0.342717,
+          "magnitude_rel_drift": 0.004679
+        },
+        {
+          "epoch": 5.0,
+          "eval_metric": 0.871263,
+          "eval_loss": 0.365794,
+          "train_loss": 0.335262,
+          "lora_norm_mean": 0.344689,
+          "magnitude_rel_drift": 0.004699
+        }
+      ],
+      "n_epochs": 5
+    },
+    {
+      "run": "glue_mrpc_roberta_dora_r4",
+      "task": "mrpc",
+      "model": "roberta",
+      "method": "dora",
+      "rank": 4,
+      "alpha": 8,
+      "metric": 0.866037,
+      "metric_pct": 86.6037,
+      "epoch_curve": [
+        {
+          "epoch": 1.0,
+          "eval_metric": 0.818808,
+          "eval_loss": 0.473893,
+          "train_loss": 0.568858,
+          "lora_norm_mean": 0.284505,
+          "magnitude_rel_drift": 0.002958
+        },
+        {
+          "epoch": 2.0,
+          "eval_metric": 0.86782,
+          "eval_loss": 0.391287,
+          "train_loss": 0.426088,
+          "lora_norm_mean": 0.38933,
+          "magnitude_rel_drift": 0.00386
+        },
+        {
+          "epoch": 3.0,
+          "eval_metric": 0.871726,
+          "eval_loss": 0.346431,
+          "train_loss": 0.367706,
+          "lora_norm_mean": 0.422779,
+          "magnitude_rel_drift": 0.004154
+        },
+        {
+          "epoch": 4.0,
+          "eval_metric": 0.868063,
+          "eval_loss": 0.346616,
+          "train_loss": 0.342575,
+          "lora_norm_mean": 0.434267,
+          "magnitude_rel_drift": 0.004245
+        },
+        {
+          "epoch": 5.0,
+          "eval_metric": 0.866037,
+          "eval_loss": 0.35401,
+          "train_loss": 0.301551,
+          "lora_norm_mean": 0.436576,
+          "magnitude_rel_drift": 0.004261
+        }
+      ],
+      "n_epochs": 5
+    },
+    {
+      "run": "glue_mrpc_roberta_dora_r8",
+      "task": "mrpc",
+      "model": "roberta",
+      "method": "dora",
+      "rank": 8,
+      "alpha": 16,
+      "metric": 0.877503,
+      "metric_pct": 87.7503,
+      "epoch_curve": [
+        {
+          "epoch": 1.0,
+          "eval_metric": 0.835294,
+          "eval_loss": 0.417932,
+          "train_loss": 0.561826,
+          "lora_norm_mean": 0.377277,
+          "magnitude_rel_drift": 0.00278
+        },
+        {
+          "epoch": 2.0,
+          "eval_metric": 0.858809,
+          "eval_loss": 0.387141,
+          "train_loss": 0.399437,
+          "lora_norm_mean": 0.511648,
+          "magnitude_rel_drift": 0.003634
+        },
+        {
+          "epoch": 3.0,
+          "eval_metric": 0.878796,
+          "eval_loss": 0.351688,
+          "train_loss": 0.325933,
+          "lora_norm_mean": 0.555154,
+          "magnitude_rel_drift": 0.003915
+        },
+        {
+          "epoch": 4.0,
+          "eval_metric": 0.877503,
+          "eval_loss": 0.369604,
+          "train_loss": 0.312468,
+          "lora_norm_mean": 0.572032,
+          "magnitude_rel_drift": 0.004008
+        },
+        {
+          "epoch": 5.0,
+          "eval_metric": 0.877503,
+          "eval_loss": 0.375117,
+          "train_loss": 0.271507,
+          "lora_norm_mean": 0.57452,
+          "magnitude_rel_drift": 0.00402
+        }
+      ],
+      "n_epochs": 5
+    },
+    {
+      "run": "glue_mrpc_roberta_dora_r16",
+      "task": "mrpc",
+      "model": "roberta",
+      "method": "dora",
+      "rank": 16,
+      "alpha": 32,
+      "metric": 0.903277,
+      "metric_pct": 90.3277,
+      "epoch_curve": [
+        {
+          "epoch": 1.0,
+          "eval_metric": 0.865625,
+          "eval_loss": 0.37554,
+          "train_loss": 0.497278,
+          "lora_norm_mean": 0.474061,
+          "magnitude_rel_drift": 0.00242
+        },
+        {
+          "epoch": 2.0,
+          "eval_metric": 0.878044,
+          "eval_loss": 0.319273,
+          "train_loss": 0.397279,
+          "lora_norm_mean": 0.695502,
+          "magnitude_rel_drift": 0.003314
+        },
+        {
+          "epoch": 3.0,
+          "eval_metric": 0.899906,
+          "eval_loss": 0.291617,
+          "train_loss": 0.300195,
+          "lora_norm_mean": 0.765805,
+          "magnitude_rel_drift": 0.003622
+        },
+        {
+          "epoch": 4.0,
+          "eval_metric": 0.901101,
+          "eval_loss": 0.31109,
+          "train_loss": 0.261914,
+          "lora_norm_mean": 0.786062,
+          "magnitude_rel_drift": 0.003708
+        },
+        {
+          "epoch": 5.0,
+          "eval_metric": 0.903277,
+          "eval_loss": 0.31304,
+          "train_loss": 0.235913,
+          "lora_norm_mean": 0.789645,
+          "magnitude_rel_drift": 0.003722
+        }
+      ],
+      "n_epochs": 5
+    },
+    {
+      "run": "glue_mrpc_roberta_dora_r32",
+      "task": "mrpc",
+      "model": "roberta",
+      "method": "dora",
+      "rank": 32,
+      "alpha": 64,
+      "metric": 0.898472,
+      "metric_pct": 89.8472,
+      "epoch_curve": [
+        {
+          "epoch": 1.0,
+          "eval_metric": 0.854804,
+          "eval_loss": 0.387134,
+          "train_loss": 0.490106,
+          "lora_norm_mean": 0.633546,
+          "magnitude_rel_drift": 0.002384
+        },
+        {
+          "epoch": 2.0,
+          "eval_metric": 0.899365,
+          "eval_loss": 0.38031,
+          "train_loss": 0.368307,
+          "lora_norm_mean": 0.875982,
+          "magnitude_rel_drift": 0.003151
+        },
+        {
+          "epoch": 3.0,
+          "eval_metric": 0.900512,
+          "eval_loss": 0.309991,
+          "train_loss": 0.271973,
+          "lora_norm_mean": 0.972009,
+          "magnitude_rel_drift": 0.003445
+        },
+        {
+          "epoch": 4.0,
+          "eval_metric": 0.897044,
+          "eval_loss": 0.350311,
+          "train_loss": 0.213928,
+          "lora_norm_mean": 1.001531,
+          "magnitude_rel_drift": 0.003525
+        },
+        {
+          "epoch": 5.0,
+          "eval_metric": 0.898472,
+          "eval_loss": 0.344445,
+          "train_loss": 0.167278,
+          "lora_norm_mean": 1.004946,
+          "magnitude_rel_drift": 0.003532
+        }
+      ],
+      "n_epochs": 5
+    },
+    {
+      "run": "glue_mrpc_roberta_lora_r2",
+      "task": "mrpc",
+      "model": "roberta",
+      "method": "lora",
+      "rank": 2,
+      "alpha": 4,
+      "metric": 0.862411,
+      "metric_pct": 86.2411,
+      "epoch_curve": [
+        {
+          "epoch": 1.0,
+          "eval_metric": 0.797833,
+          "eval_loss": 0.506711,
+          "train_loss": 0.608327,
+          "lora_norm_mean": 0.215558,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 2.0,
+          "eval_metric": 0.862995,
+          "eval_loss": 0.401179,
+          "train_loss": 0.457832,
+          "lora_norm_mean": 0.314189,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 3.0,
+          "eval_metric": 0.854848,
+          "eval_loss": 0.355494,
+          "train_loss": 0.394039,
+          "lora_norm_mean": 0.33768,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 4.0,
+          "eval_metric": 0.861785,
+          "eval_loss": 0.358055,
+          "train_loss": 0.368797,
+          "lora_norm_mean": 0.34721,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 5.0,
+          "eval_metric": 0.862411,
+          "eval_loss": 0.365033,
+          "train_loss": 0.343938,
+          "lora_norm_mean": 0.349475,
+          "magnitude_rel_drift": null
+        }
+      ],
+      "n_epochs": 5
+    },
+    {
+      "run": "glue_mrpc_roberta_lora_r4",
+      "task": "mrpc",
+      "model": "roberta",
+      "method": "lora",
+      "rank": 4,
+      "alpha": 8,
+      "metric": 0.87732,
+      "metric_pct": 87.732,
+      "epoch_curve": [
+        {
+          "epoch": 1.0,
+          "eval_metric": 0.823108,
+          "eval_loss": 0.469621,
+          "train_loss": 0.583067,
+          "lora_norm_mean": 0.277391,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 2.0,
+          "eval_metric": 0.867042,
+          "eval_loss": 0.348555,
+          "train_loss": 0.435328,
+          "lora_norm_mean": 0.386034,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 3.0,
+          "eval_metric": 0.875018,
+          "eval_loss": 0.341283,
+          "train_loss": 0.367091,
+          "lora_norm_mean": 0.424394,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 4.0,
+          "eval_metric": 0.872514,
+          "eval_loss": 0.334349,
+          "train_loss": 0.339675,
+          "lora_norm_mean": 0.437677,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 5.0,
+          "eval_metric": 0.87732,
+          "eval_loss": 0.34132,
+          "train_loss": 0.311436,
+          "lora_norm_mean": 0.440158,
+          "magnitude_rel_drift": null
+        }
+      ],
+      "n_epochs": 5
+    },
+    {
+      "run": "glue_mrpc_roberta_lora_r8",
+      "task": "mrpc",
+      "model": "roberta",
+      "method": "lora",
+      "rank": 8,
+      "alpha": 16,
+      "metric": 0.8586,
+      "metric_pct": 85.86,
+      "epoch_curve": [
+        {
+          "epoch": 1.0,
+          "eval_metric": 0.792158,
+          "eval_loss": 0.463953,
+          "train_loss": 0.599467,
+          "lora_norm_mean": 0.376506,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 2.0,
+          "eval_metric": 0.851889,
+          "eval_loss": 0.394264,
+          "train_loss": 0.419535,
+          "lora_norm_mean": 0.506229,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 3.0,
+          "eval_metric": 0.863174,
+          "eval_loss": 0.340667,
+          "train_loss": 0.344799,
+          "lora_norm_mean": 0.546634,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 4.0,
+          "eval_metric": 0.858389,
+          "eval_loss": 0.376106,
+          "train_loss": 0.322594,
+          "lora_norm_mean": 0.561958,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 5.0,
+          "eval_metric": 0.8586,
+          "eval_loss": 0.379226,
+          "train_loss": 0.28545,
+          "lora_norm_mean": 0.564154,
+          "magnitude_rel_drift": null
+        }
+      ],
+      "n_epochs": 5
+    },
+    {
+      "run": "glue_mrpc_roberta_lora_r16",
+      "task": "mrpc",
+      "model": "roberta",
+      "method": "lora",
+      "rank": 16,
+      "alpha": 32,
+      "metric": 0.87309,
+      "metric_pct": 87.309,
+      "epoch_curve": [
+        {
+          "epoch": 1.0,
+          "eval_metric": 0.853526,
+          "eval_loss": 0.389732,
+          "train_loss": 0.529303,
+          "lora_norm_mean": 0.477683,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 2.0,
+          "eval_metric": 0.882592,
+          "eval_loss": 0.389719,
+          "train_loss": 0.413989,
+          "lora_norm_mean": 0.658136,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 3.0,
+          "eval_metric": 0.876763,
+          "eval_loss": 0.339852,
+          "train_loss": 0.290213,
+          "lora_norm_mean": 0.726446,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 4.0,
+          "eval_metric": 0.886288,
+          "eval_loss": 0.375723,
+          "train_loss": 0.271036,
+          "lora_norm_mean": 0.750325,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 5.0,
+          "eval_metric": 0.87309,
+          "eval_loss": 0.366846,
+          "train_loss": 0.229762,
+          "lora_norm_mean": 0.753822,
+          "magnitude_rel_drift": null
+        }
+      ],
+      "n_epochs": 5
+    },
+    {
+      "run": "glue_mrpc_roberta_lora_r32",
+      "task": "mrpc",
+      "model": "roberta",
+      "method": "lora",
+      "rank": 32,
+      "alpha": 64,
+      "metric": 0.901101,
+      "metric_pct": 90.1101,
+      "epoch_curve": [
+        {
+          "epoch": 1.0,
+          "eval_metric": 0.867042,
+          "eval_loss": 0.379587,
+          "train_loss": 0.5311,
+          "lora_norm_mean": 0.674643,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 2.0,
+          "eval_metric": 0.890011,
+          "eval_loss": 0.294062,
+          "train_loss": 0.410532,
+          "lora_norm_mean": 0.914954,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 3.0,
+          "eval_metric": 0.896434,
+          "eval_loss": 0.305215,
+          "train_loss": 0.289836,
+          "lora_norm_mean": 0.999381,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 4.0,
+          "eval_metric": 0.88928,
+          "eval_loss": 0.353123,
+          "train_loss": 0.249895,
+          "lora_norm_mean": 1.027057,
+          "magnitude_rel_drift": null
+        },
+        {
+          "epoch": 5.0,
+          "eval_metric": 0.901101,
+          "eval_loss": 0.352259,
+          "train_loss": 0.192323,
+          "lora_norm_mean": 1.030298,
+          "magnitude_rel_drift": null
+        }
+      ],
+      "n_epochs": 5
+    }
+  ]
+}
