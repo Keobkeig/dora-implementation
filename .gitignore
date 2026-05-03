@@ -70,10 +70,11 @@ runs/
 outputs/
 artifacts/
 checkpoints/
+*.pt
+*.pth
 benchmark_results/
 dora_output/
 *.ckpt
-*.pth
 *.bin
 *.safetensors
 
