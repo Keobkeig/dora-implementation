@@ -1,0 +1,176 @@
+% ============================================================
+%  DoRA Project Report — CS4782 Spring 2025
+%  Authors: Richie Xue, Shaurya Sen, Kyle Du
+%  Max 2 pages (excluding images and references)
+% ============================================================
+\documentclass[11pt]{article}
+
+\usepackage[margin=0.9in,top=0.85in,bottom=0.85in]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{titlesec}
+
+\setlength{\parskip}{2pt}
+\setlength{\parindent}{0pt}
+\captionsetup{font=small,skip=3pt}
+
+\titlespacing*{\section}{0pt}{5pt}{2pt}
+\titlespacing*{\subsection}{0pt}{3pt}{1pt}
+\titleformat{\section}{\normalfont\bfseries\large}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalfont\bfseries}{}{0em}{}
+
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue}
+
+\begin{document}
+
+\begin{center}
+	{\large\textbf{Exploring DoRA: Weight-Decomposed Low-Rank Adaptation Across Modalities}}\\[4pt]
+	Richie Xue \quad Shaurya Sen \quad Kyle Du\\
+	Cornell University $\cdot$ CS\,4782: Introduction to Deep Learning $\cdot$ Spring 2025
+\end{center}
+\vspace{3pt}
+% \hrule
+\vspace{1pt}
+
+% ----------------------------------------------------------
+\section{Introduction}
+% ----------------------------------------------------------
+
+Fine-tuning large pre-trained models is prohibitively expensive when all parameters must be updated.
+\textbf{LoRA} \cite{hu2022lora} addresses this by freezing model weights $W_0$ and injecting trainable low-rank matrices $\Delta W = BA$, reducing trainable parameters to roughly 1\% of total.
+However, LoRA couples magnitude and directional updates within the same low-rank perturbation, which can introduce gradient interference especially on small datasets.
+
+\textbf{DoRA} (Liu et al., 2024) \cite{liu2024dora} decomposes each weight matrix into a learnable magnitude scalar $m$ and a unit-norm direction updated via LoRA: $W' = m \cdot (W_0{+}BA)/\|W_0{+}BA\|_c$.
+The overhead is $+d$ scalars per layer ($<0.1\%$ of parameters). The paper reports consistent gains over LoRA on NLP benchmarks at equivalent parameter budgets. Our project re-implements DoRA from scratch in PyTorch and evaluates it across four modalities: NLP (RoBERTa/GLUE), audio (Wav2Vec2/Speech Commands), vision (ViT and SigLIP/Cornell Grasp), and robotics (SmolVLM/Push-T).
+
+% ----------------------------------------------------------
+\section{Chosen Result}
+% ----------------------------------------------------------
+
+We target DoRA's primary claim: \emph{DoRA consistently outperforms LoRA at equivalent rank on GLUE, with the largest gains on low-data tasks (RTE, MRPC).}
+This is the central empirical contribution — magnitude decoupling should matter most where gradient interference is highest: small-dataset tasks where full fine-tuning already fails.
+We extend the evaluation to audio classification, visual grasp pose regression, and VLA action prediction.
+
+% ----------------------------------------------------------
+\section{Methodology}
+% ----------------------------------------------------------
+
+\textbf{Custom DoRA implementation.}
+We implement \texttt{DoRALinear}, a drop-in replacement for \texttt{nn.Linear} storing frozen $W_0$, low-rank $A,B$ (init so $BA{=}0$), and magnitude $m$ initialized to column norms of $W_0$.
+A parallel \texttt{LoRALinear} baseline (identical minus magnitude) enables fair ablation. Adapter state is saved separately from frozen weights.
+
+\textbf{NLP — GLUE (RoBERTa-base, 125M).}
+Target modules: \texttt{query, key, value} projections.
+Rank $r=8$, $\alpha=16$, AdamW, cosine LR ($2\!\times\!10^{-4}$ for adapters, $2\!\times\!10^{-5}$ for head), 5 epochs, bfloat16.
+Tasks: SST-2 (67k, sentiment), MRPC (3.7k, paraphrase), RTE (2.5k, entailment).
+We also run a rank sweep ($r \in \{2,4,8,16,32\}$) on MRPC and a scale study with TinyLlama-1.1B and OpenLLaMA-3B.
+
+\textbf{Audio — Speech Commands (Wav2Vec2-base, 67M).}
+12-class keyword spotting (KWS-12). Same adapter config; feature encoder frozen; sequence classification head trained.
+5 epochs, batch size 8, lr $2\!\times\!10^{-4}$; 84.8k train / 10k val / 4.9k test utterances.
+
+\textbf{Vision — Cornell Grasp (ViT-B/16 and SigLIP-B/16, $\sim$87--93M).}
+Task: predict 6D grasp pose $(x,y,\sin 2\theta, \cos 2\theta, w, h)$ from a 640$\times$480 RGB image.
+Metric: Cornell success rate — IoU $\geq 0.25$ \emph{and} $|\Delta\text{angle}| \leq 30°$.
+885 images (708 train / 177 val), image-level split. Trained for 30 epochs.
+Comparison: DoRA vs.\ LoRA vs.\ full fine-tuning.
+
+\textbf{VLA — Push-T (SmolVLM-256M).}
+Task: predict 2D end-effector action $(x,y)$ from RGB frame + text instruction.
+DoRA and LoRA applied to visual attention projections; trained for 3 epochs.
+Metric: action MSE on held-out rollouts.
+
+% ----------------------------------------------------------
+\section{Results \& Analysis}
+% ----------------------------------------------------------
+
+\subsection{NLP — GLUE}
+
+\begin{table}[h!]
+	\centering\small
+	\begin{tabular}{@{}lrrrrr@{}}
+		\toprule
+		Task (train size) & Metric   & DoRA            & LoRA            & Full FT & Trainable \\
+		\midrule
+		SST-2 (67k)       & Accuracy & 93.1\%          & \textbf{93.3\%} & 93.2\%  & $\sim$1\% \\
+		RTE (2.5k)        & Accuracy & \textbf{71.1\%} & 70.8\%          & 54.9\%  & $\sim$1\% \\
+		MRPC (3.7k)       & F1       & \textbf{90.7\%} & 90.1\%          & 81.2\%  & $\sim$1\% \\
+		MRPC (3.7k)       & Accuracy & \textbf{87.0\%} & 85.8\%          & 68.4\%  & $\sim$1\% \\
+		\bottomrule
+	\end{tabular}
+	\caption{GLUE results. RoBERTa-base, rank=8. DoRA/LoRA outperform full FT on small tasks.}
+\end{table}
+
+DoRA matches the paper's claim on low-data tasks: +0.3~pp on RTE, +0.6~pp F1 on MRPC vs.\ LoRA.
+On SST-2 (large data), LoRA slightly edges DoRA, consistent with the paper's finding that magnitude decoupling provides no benefit when gradients are already well-conditioned by data abundance.
+\textbf{The most striking result is full fine-tuning's collapse}: 54.9\% on RTE (near-chance) and 68.4\% accuracy on MRPC, confirming that updating all 125M parameters on 2.5k examples causes catastrophic overfitting.
+The rank sweep on MRPC shows DoRA at $r{=}16$ (90.3\% combined) matching LoRA at $r{=}32$ (90.1\%), demonstrating parameter efficiency.
+
+\subsection{Audio — Speech Commands}
+
+DoRA achieves \textbf{98.6\% validation / 89.7\% test accuracy} vs.\ LoRA's 98.5\% / 89.0\%, and trains in \textbf{152.8~min} vs.\ 190.8~min (20\% speedup) despite the magnitude scalar overhead.
+
+\subsection{Vision — Cornell Grasp}
+
+\begin{table}[h!]
+	\centering\small
+	\begin{tabular}{@{}llrrr@{}}
+		\toprule
+		Backbone    & Method  & Success Rate    & Trainable \\
+		\midrule
+		ViT-B/16    & DoRA    & 7.9\%           & $\sim$1\% \\
+		ViT-B/16    & LoRA    & 6.2\%           & $\sim$1\% \\
+		ViT-B/16    & Full FT & 0.6\%           & 100\%     \\
+		SigLIP-B/16 & DoRA    & 19.8\%          & $\sim$1\% \\
+		SigLIP-B/16 & LoRA    & \textbf{20.3\%} & $\sim$1\% \\
+		SigLIP-B/16 & Full FT & 15.8\%          & 100\%     \\
+		\bottomrule
+	\end{tabular}
+	\caption{Cornell Grasp success rate (IoU $\geq$0.25 and $|\Delta\theta|\leq30°$).}
+\end{table}
+
+Results diverge from the NLP trend: \textbf{DoRA does not consistently outperform LoRA}.
+On ViT-B/16, DoRA wins (+1.7~pp); on SigLIP-B/16, LoRA edges DoRA (20.3\% vs.\ 19.8\%).
+Full fine-tuning collapses on both backbones (Cornell: 885 images). The dominant factor is \emph{backbone quality}: SigLIP achieves $3\times$ better success than ViT, a gap driven by pretraining rather than adapter method.
+
+\subsection{VLA — Push-T}
+
+Both methods show rapid MSE reduction (DoRA: 63.6 $\to$ 27.9; LoRA: 62.1 $\to$ 24.8).
+\textbf{LoRA outperforms DoRA} here — with only 3 epochs and 256M parameters, magnitude decoupling has too few updates to provide directional benefit.
+
+% ----------------------------------------------------------
+\section{Reflections}
+% ----------------------------------------------------------
+
+\textbf{Key takeaways.} DoRA's gains are \emph{task- and modality-dependent}: largest on low-data NLP, minimal or absent on vision and VLA. Across all modalities, adapters (DoRA and LoRA) vastly outperform full fine-tuning on small datasets — a finding more robust than DoRA's narrow edge over LoRA.
+
+\textbf{Unexpected findings.} Per-epoch tracking reveals \textbf{magnitude drift is near-zero} (relative drift $<0.7\%$ across all runs). We hypothesize bfloat16 precision causes magnitude gradients to fall below the quantization step, freezing $m$ at its pretrained value. DoRA's advantage likely comes from the unit-norm directional constraint, not magnitude learning — suggesting DoRA and LoRA are closer to equivalent than the paper (float32) reports.
+
+\textbf{Challenges.} (1) Cornell Grasp (885 images) had high run variance. (2) VLA memory constraints limited us to 3 epochs with SmolVLM-256M vs.\ 7B OpenVLA. (3) GLUE reproduction required careful LR schedule, per-component weight decay, and BF16 matching.
+
+\textbf{Future work.} Full VLA training with 4-bit quantization; rank-adaptive DoRA (scale $r$ by magnitude drift per layer); float32 re-run to quantify bfloat16's masking effect.
+
+% ----------------------------------------------------------
+\section*{References}
+% ----------------------------------------------------------
+{\small
+	\begin{enumerate}[leftmargin=*,label={[\arabic*]}]
+		\item Liu, S., Wang, H., Yin, S., Wu, C., Qiu, X., \& Cheng, Y. (2024). DoRA: Weight-Decomposed Low-Rank Adaptation. \textit{ICML 2024}. arXiv:2402.09353.
+		\item Hu, E., Shen, Y., Wallis, P., et al.\ (2022). LoRA: Low-Rank Adaptation of Large Language Models. \textit{ICLR 2022}. arXiv:2106.09685.
+		\item Wang, A., Singh, A., Michael, J., et al.\ (2019). GLUE: A Multi-Task Benchmark and Analysis Platform. \textit{ICLR 2019}.
+		\item Warden, P. (2018). Speech Commands: A Dataset for Limited-Vocabulary Speech Recognition. arXiv:1804.03209.
+		\item Kim, M., et al.\ (2024). OpenVLA: An Open-Source Vision-Language-Action Model. arXiv:2406.09246.
+		\item Wolf, T., et al.\ (2020). HuggingFace Transformers. \textit{EMNLP 2020}.
+		\item Jiang, C., et al.\ (2023). SmolVLM. HuggingFace.
+	\end{enumerate}
+}
+
+\end{document}
