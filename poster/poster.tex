@@ -1,0 +1,406 @@
+% ============================================================
+%  DoRA Multi-Modal Research Poster — Cornell Red Theme
+%  36 x 24 inches  (91.44 x 60.96 cm)
+%
+%  Cornell logo: drop cornell_seal.png in this folder.
+%  If absent, the TikZ fallback seal is used automatically.
+% ============================================================
+\documentclass[final]{beamer}
+
+\usepackage[size=custom,width=91.44,height=60.96,scale=1.2]{beamerposter}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage[most]{tcolorbox}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{ragged2e}
+\usepackage{colortbl}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc}
+
+% ----------------------------------------------------------
+%  Cornell Palette
+% ----------------------------------------------------------
+\definecolor{CornellRed}  {RGB}{179, 27,  27}
+\definecolor{CornellDark} {RGB}{ 91,  0,   0}
+\definecolor{CornellMid}  {RGB}{140, 20,  20}
+\definecolor{CornellAccent}{RGB}{220,170,170}
+\definecolor{CornellGray} {RGB}{ 84, 88,  90}
+\definecolor{BodyBg}      {RGB}{255,255,255}
+\definecolor{TableShade}  {RGB}{253,238,238}
+
+% ----------------------------------------------------------
+%  Beamer base
+% ----------------------------------------------------------
+\setbeamercolor{background canvas}{bg=white}
+\setbeamertemplate{navigation symbols}{}
+
+% ----------------------------------------------------------
+%  TikZ Cornell Seal (fallback)
+% ----------------------------------------------------------
+\newcommand{\CornellSealTikZ}[1][2.8cm]{%
+  \begin{tikzpicture}
+    \fill[CornellDark] (0,0) circle (#1);
+    \fill[white]       (0,0) circle ({#1*0.84});
+    \fill[CornellMid]  (0,0) circle ({#1*0.70});
+    \fill[white]
+      ({-#1*0.28},{#1*0.22}) -- ({-#1*0.28},{-#1*0.06})
+      .. controls ({-#1*0.28},{-#1*0.32}) and (0,{-#1*0.44}) ..
+      (0,{-#1*0.44})
+      .. controls (0,{-#1*0.44}) and ({#1*0.28},{-#1*0.32}) ..
+      ({#1*0.28},{-#1*0.06})
+      -- ({#1*0.28},{#1*0.22}) -- cycle;
+    \fill[CornellDark!80]
+      ({-#1*0.28},{#1*0.22}) rectangle ({#1*0.28},{#1*0.10});
+    \node[text=white,font=\fontsize{5}{5}\selectfont\bfseries]
+      at (0,{#1*0.77}) {CORNELL UNIVERSITY};
+    \node[text=white,font=\fontsize{4.5}{4.5}\selectfont]
+      at (0,{-#1*0.77}) {FOUNDED A.D. 1865};
+  \end{tikzpicture}%
+}
+
+\newcommand{\CornellLogo}[1][3.0cm]{%
+  \IfFileExists{cornell.png}{%
+    \includegraphics[height=#1]{cornell.png}%
+  }{%
+    \CornellSealTikZ[#1]%
+  }%
+}
+
+% ----------------------------------------------------------
+%  Headline (6.5 cm — slim bar for more content space)
+% ----------------------------------------------------------
+\setbeamertemplate{headline}{%
+  \begin{beamercolorbox}[wd=\paperwidth]{headline}%
+    \begin{tikzpicture}
+      \fill[CornellRed]  (0,0) rectangle (\paperwidth, 6.5cm);
+      \fill[CornellDark] (0,0) rectangle (\paperwidth, 0.25cm);
+      \node at (4.0cm, 3.4cm) {\CornellLogo[2.2cm]};
+      \node[text=white,
+            font=\fontsize{40}{46}\selectfont\bfseries,
+            text width=78cm, align=center]
+        at ({0.5*\paperwidth}, 4.6cm)
+        {Exploring DoRA: Weight-Decomposed Low-Rank Adaptation Across Modalities};
+      \node[text=white!92,
+            font=\fontsize{20}{24}\selectfont, align=center]
+        at ({0.5*\paperwidth}, 2.6cm)
+        {Richie Xue \quad\textbullet\quad
+         Shaurya Sen \quad\textbullet\quad
+         Kyle Du};
+      \node[text=white!70,
+            font=\fontsize{15}{18}\selectfont, align=center]
+        at ({0.5*\paperwidth}, 1.2cm)
+        {Cornell University \quad\textbullet\quad
+         CS\,4782: Introduction to Deep Learning \quad\textbullet\quad
+         Spring 2025};
+    \end{tikzpicture}%
+  \end{beamercolorbox}%
+}
+
+% ----------------------------------------------------------
+%  Footline
+% ----------------------------------------------------------
+\setbeamertemplate{footline}{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=1.5cm,dp=0.3cm]{footline}%
+    \begin{tikzpicture}
+      \fill[CornellDark] (0,0) rectangle (\paperwidth, 1.8cm);
+      \node[text=white, font=\normalsize]
+        at ({0.5*\paperwidth}, 0.9cm)
+        {Cornell University $\cdot$ Dept.\ of Computer Science
+         $\cdot$ CS\,4782: Introduction to Deep Learning
+         $\cdot$ Spring 2025};
+    \end{tikzpicture}%
+  \end{beamercolorbox}%
+}
+
+% ----------------------------------------------------------
+%  tcolorbox block style
+% ----------------------------------------------------------
+\tcbset{
+  posterblock/.style={
+    enhanced,
+    colback        = BodyBg,
+    colframe       = CornellDark,
+    colbacktitle   = CornellMid,
+    coltitle       = white,
+    fonttitle      = \large\bfseries\itshape,
+    boxrule        = 0.6pt,
+    arc            = 5pt,
+    titlerule      = 0pt,
+    top            = 0.28cm,
+    bottom         = 0.28cm,
+    left           = 0.40cm,
+    right          = 0.40cm,
+    toptitle       = 0.18cm,
+    bottomtitle    = 0.18cm,
+    before skip    = 0.45cm,
+  },
+}
+
+\newcommand{\hl}[1]{\textcolor{CornellRed}{\textbf{#1}}}
+\newcommand{\lb}[1]{\textbf{#1:}\;}
+\renewcommand{\arraystretch}{1.2}
+
+% ----------------------------------------------------------
+\begin{document}
+\begin{frame}[t]
+\vspace{0.35cm}
+
+\begin{columns}[T,totalwidth=\textwidth]
+\setlength{\columnsep}{0.8cm}
+
+% ============================================================
+%  COLUMN 1  —  Background + Methodology
+% ============================================================
+\begin{column}{0.31\textwidth}
+
+\begin{tcolorbox}[posterblock,title=Background \& Motivation]
+  \lb{Problem} Full fine-tuning of large pre-trained models
+  (LLMs, ViTs, Wav2Vec) requires updating billions of parameters
+  — prohibitive for most practitioners.
+
+  \vspace{0.2cm}
+  \lb{LoRA} Injects trainable low-rank matrices $\Delta W = BA$
+  into frozen layers.  Efficient, but \emph{couples} the magnitude
+  and direction of weight updates.
+
+  \vspace{0.2cm}
+  \lb{DoRA Key Insight} Decompose each weight into a learnable
+  \hl{magnitude} scalar $m$ and a \hl{unit-norm direction}, then
+  apply LoRA only to the direction:
+  \[
+    W' = \underbrace{m}_{\text{scale}}
+         \cdot
+         \frac{W_0 + BA}{\|W_0 + BA\|_{\mathrm{col}}}
+  \]
+  $B$ initialised to $\mathbf{0}$; $m$ to column norms of $W_0$.
+  Overhead vs.\ LoRA: $+d$ scalars per layer ($<0.1\%$).
+
+  \vspace{0.2cm}
+  \lb{Goals}
+  \begin{itemize}
+    \item Reproduce DoRA gains across four modalities
+    \item Identify when magnitude decoupling matters
+    \item Compare DoRA vs.\ LoRA at equal parameter budgets
+  \end{itemize}
+\end{tcolorbox}
+
+\begin{tcolorbox}[posterblock,title=Methodology]
+  \lb{Models \& Tasks}
+  \begin{itemize}
+    \item \textbf{NLP}: RoBERTa-base/large on GLUE (SST-2, MRPC, RTE)
+    \item \textbf{Audio}: Wav2Vec2-base on Speech Commands (12 KWS)
+    \item \textbf{Vision}: ViT-B/16 \& SigLIP-B/16 on robot grasping
+    \item \textbf{VLA}: Action prediction on Push-T robot task
+  \end{itemize}
+
+  \vspace{0.2cm}
+  \lb{Shared Config}
+  Rank $r\!\in\!\{2,4,8,16,32\}$; $\alpha=2r$; target \texttt{q,k,v,o\_proj};
+  AdamW + cosine LR; 5 epochs.
+
+  \vspace{0.2cm}
+  \lb{DoRA Decomposition Flow}
+
+  \begin{center}
+  \begin{tikzpicture}[
+      box/.style={rectangle,rounded corners=3pt,draw=CornellDark,
+                  fill=white,line width=0.7pt,minimum width=1.9cm,
+                  minimum height=0.7cm,font=\small,align=center},
+      arr/.style={-Stealth,thick,CornellGray}]
+    \node[box,fill=CornellAccent!45](W0){$W_0$\\\scriptsize frozen};
+    \node[box,right=1.1cm of W0](BA){$+BA$\\\scriptsize LoRA};
+    \node[box,right=1.1cm of BA](N){$\div\|\cdot\|$\\\scriptsize norm};
+    \node[box,fill=CornellRed!25,right=1.1cm of N](S){$\times m$\\\scriptsize scale};
+    \draw[arr](W0)--(BA);
+    \draw[arr](BA)--(N);
+    \draw[arr](N)--(S);
+  \end{tikzpicture}
+  \end{center}
+
+  \vspace{0.15cm}
+  \lb{Implementation} Custom \texttt{DoRALinear} layer in PyTorch
+  replacing every target \texttt{nn.Linear} in-place via
+  \texttt{apply\_dora\_to\_model()}.
+  Adapter state (magnitude $m$, $A$, $B$) saved separately from
+  frozen base weights.
+\end{tcolorbox}
+
+\end{column}
+
+% ============================================================
+%  COLUMN 2  —  NLP + Audio Results
+% ============================================================
+\begin{column}{0.37\textwidth}
+
+\begin{tcolorbox}[posterblock,title=NLP Results — GLUE Benchmark]
+  \lb{MRPC Rank Sweep} (RoBERTa-base; combined F1 + accuracy)
+
+  \vspace{0.2cm}
+  \begin{center}\small
+  \begin{tabular}{@{}cccr@{}}
+    \toprule
+    \textbf{Rank} & \textbf{DoRA (\%)} & \textbf{LoRA (\%)} & $\Delta$ \\
+    \midrule
+    2  & 87.1 & 86.2 & $+0.9$ \\
+    4  & 86.6 & 87.7 & $-1.1$ \\
+    8  & 87.8 & 85.9 & $+1.9$ \\
+    \rowcolor{TableShade}
+    \textbf{16} & \textbf{90.3} & 87.3 & $\bm{+3.0}$ \\
+    32 & 89.8 & 90.1 & $-0.3$ \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+
+  \vspace{0.15cm}
+  \small\textit{DoRA at $r=16$ (90.3\%) beats LoRA's best ($r=32$: 90.1\%)
+  at \textbf{half the parameters}.}
+
+  \vspace{0.25cm}
+  \lb{Cross-Task at $r=8$} (RoBERTa-base accuracy / F1+acc / accuracy)
+
+  \vspace{0.2cm}
+  \begin{center}\small
+  \begin{tabular}{@{}lccc@{}}
+    \toprule
+    \textbf{Task} & \textbf{DoRA} & \textbf{LoRA} & $\Delta$ \\
+    \midrule
+    SST-2 (67k, sentiment) & 93.2\% & 93.3\% & $-0.1$ \\
+    MRPC (3.7k, paraphrase) & 87.8\% & 85.9\% & $+1.9$ \\
+    \rowcolor{TableShade}
+    RTE (2.5k, inference) & \textbf{70.0\%} & 66.1\% & $\bm{+3.9}$ \\
+    \midrule
+    SST-2 \textit{large} & 96.4\% & 95.5\% & $+0.9$ \\
+    MRPC \textit{large}  & 89.3\% & 89.5\% & $-0.2$ \\
+    RTE  \textit{large}  & 76.9\% & 78.7\% & $-1.8$ \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+
+  \vspace{0.15cm}
+  \small\textit{DoRA's advantage is largest on \hl{low-data tasks}
+  (RTE $+3.9$\,pp) where magnitude decoupling reduces directional
+  gradient interference.  On large models both methods saturate.}
+\end{tcolorbox}
+
+\begin{tcolorbox}[posterblock,title=Audio Results — Speech Commands]
+  Wav2Vec2-base (67M params) fine-tuned on Google Speech Commands
+  v0.02 — 84.8k utterances, \textbf{12 keyword classes}.
+
+  \vspace{0.2cm}
+  \begin{center}\small
+  \begin{tabular}{@{}lcccc@{}}
+    \toprule
+    \textbf{Method} & \textbf{Val Acc} & \textbf{Test Acc}
+                    & \textbf{Trainable} & \textbf{Time} \\
+    \midrule
+    \rowcolor{TableShade}
+    DoRA ($r=8$) & \textbf{98.6\%} & \textbf{89.7\%}
+                 & 826.6k & \textbf{152.8 min} \\
+    LoRA ($r=8$) & 98.5\% & 89.0\%
+                 & 789.8k & 190.8 min \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+
+  \vspace{0.15cm}
+  \small\textit{\hl{+0.7\% test accuracy}, \hl{25\% less training time}.
+  The magnitude scalar's small overhead is offset by faster directional
+  gradient convergence on the audio encoder.}
+\end{tcolorbox}
+
+\end{column}
+
+% ============================================================
+%  COLUMN 3  —  Vision/VLA Samples + Conclusions
+% ============================================================
+\begin{column}{0.29\textwidth}
+
+\begin{tcolorbox}[posterblock,title=Vision \& Robot Results]
+  \lb{Object Grasping} RGB image $\to$ 2D bounding-box prediction
+  using ViT-B/16 and SigLIP-B/16 backbones with DoRA/LoRA ($r=8$).
+
+  \vspace{0.2cm}
+  \begin{center}\small
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+    \textbf{Backbone} & \textbf{DoRA} & \textbf{LoRA} \\
+    \midrule
+    ViT-B/16   & 11.9\% IoU & 11.9\% IoU \\
+    \rowcolor{TableShade}
+    SigLIP-B/16 & \textbf{22.0\%} IoU & 21.5\% IoU \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+
+  \vspace{0.15cm}
+  \small\textit{SigLIP's richer vision--language pretraining benefits
+  more from magnitude decoupling. ViT features show minimal difference.}
+
+  \vspace{0.25cm}
+  \lb{Qualitative: SigLIP + DoRA}
+  {\small Green = predicted grasp\quad Red = ground truth}
+
+  \vspace{0.15cm}
+  \begin{center}
+  \begin{tabular}{@{}ccc@{}}
+    \includegraphics[width=2.4cm,height=1.8cm,
+      clip]{grasp_siglip_00.png} &
+    \includegraphics[width=2.4cm,height=1.8cm,
+      clip]{grasp_siglip_03.png} &
+    \includegraphics[width=2.4cm,height=1.8cm,
+      clip]{grasp_siglip_05.png}
+  \end{tabular}
+  \end{center}
+
+  \vspace{0.25cm}
+  \lb{Push-T VLA Task}
+  DoRA applied to a 126-layer Vision-Language-Action model for
+  robotic push-block manipulation.  Action MSE drops from 63.6
+  (epoch 1) to \textbf{27.9} (epoch 3).
+
+  \vspace{0.15cm}
+  \begin{center}
+  \begin{tabular}{@{}cc@{}}
+    \includegraphics[width=3.4cm,height=2.2cm,
+      clip]{pusht_00.png} &
+    \includegraphics[width=3.4cm,height=2.2cm,
+      clip]{pusht_04.png}
+  \end{tabular}
+  \end{center}
+  \vspace{0.1cm}
+  \centering{\small\textit{DoRA adapter driving Push-T rollouts}}
+\end{tcolorbox}
+
+\begin{tcolorbox}[posterblock,title=Conclusions \& References]
+  \begin{itemize}
+    \item \hl{Low-data NLP}: largest gains on RTE ($+3.9$\,pp)
+          and MRPC ($+3.0$\,pp @ $r=16$), where magnitude
+          decoupling reduces gradient interference
+    \item \hl{Audio}: $+0.7\%$ test accuracy and $25\%$ faster
+          training on Wav2Vec2 + Speech Commands
+    \item \hl{Vision}: SigLIP benefits more than ViT; gains are
+          modality- and architecture-dependent
+    \item Gains \hl{diminish on large models / easy tasks} where
+          LoRA already saturates
+    \item DoRA is a \hl{drop-in LoRA replacement} across all four
+          modalities tested
+  \end{itemize}
+
+  \vspace{0.2cm}
+  {\small
+  [1] Liu et al.\ (2024). DoRA: Weight-Decomposed Low-Rank Adaptation.
+      \textit{ICML 2024}.\\[2pt]
+  [2] Hu et al.\ (2022). LoRA.  \textit{ICLR 2022}.\\[2pt]
+  [3] Wang et al.\ (2018). GLUE Benchmark. \textit{EMNLP}.\\[2pt]
+  [4] Warden (2018). Speech Commands. \textit{arXiv}.}
+\end{tcolorbox}
+
+\end{column}
+
+\end{columns}
+
+\end{frame}
+\end{document}
