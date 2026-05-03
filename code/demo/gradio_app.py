@@ -145,8 +145,8 @@ def _load_rank_analysis() -> dict:
     return {}
 
 
-def _load_speech_metrics() -> dict:
-    path = RESULTS_DIR / "speech_commands_wav2vec2-base_dora_r8" / "metrics.json"
+def _load_speech_metrics(method: str = "dora") -> dict:
+    path = RESULTS_DIR / f"speech_commands_wav2vec2-base_{method}_r8" / "metrics.json"
     if path.exists():
         try:
             return json.loads(path.read_text())
@@ -362,17 +362,19 @@ def fig_grasp_results():
 
 
 def fig_speech_commands():
-    metrics = _load_speech_metrics()
+    dora_metrics = _load_speech_metrics("dora")
+    lora_metrics = _load_speech_metrics("lora")
     manifest = _load_speech_manifest("speech_commands_wav2vec2-base_dora_r8_samples")
 
     fig, axes = plt.subplots(1, 2, figsize=(FIG_W * 2, FIG_H))
 
-    # Left: method comparison bars (from metrics.json — DoRA is the only run we have)
-    methods = ["DoRA (r=8)"]
-    test_accs = [metrics.get("test_accuracy", float("nan")) * 100 if metrics else float("nan")]
-    val_accs  = [metrics.get("validation_accuracy", float("nan")) * 100 if metrics else float("nan")]
+    # Left: DoRA vs LoRA val/test accuracy bars
+    method_labels = ["DoRA (r=8)", "LoRA (r=8)"]
+    all_metrics = [dora_metrics, lora_metrics]
+    val_accs  = [m.get("validation_accuracy", float("nan")) * 100 if m else float("nan") for m in all_metrics]
+    test_accs = [m.get("test_accuracy",        float("nan")) * 100 if m else float("nan") for m in all_metrics]
 
-    x = np.arange(len(methods))
+    x = np.arange(len(method_labels))
     w = 0.35
     b1 = axes[0].bar(x - w / 2, val_accs,  w, label="Val",  color=COLORS["DoRA"],    alpha=0.88, edgecolor="white")
     b2 = axes[0].bar(x + w / 2, test_accs, w, label="Test", color=COLORS["Full FT"], alpha=0.88, edgecolor="white")
@@ -381,10 +383,10 @@ def fig_speech_commands():
             axes[0].text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.3,
                          f"{v:.1f}%", ha="center", va="bottom", fontsize=9)
     axes[0].set_xticks(x)
-    axes[0].set_xticklabels(methods, fontsize=10)
+    axes[0].set_xticklabels(method_labels, fontsize=10)
     axes[0].set_ylim(75, 100)
     axes[0].legend(fontsize=9)
-    _style(axes[0], "Speech Commands KWS-12 Accuracy\n(Wav2Vec2-base, DoRA r=8, 5 epochs)",
+    _style(axes[0], "Speech Commands KWS-12 Accuracy\n(Wav2Vec2-base, r=8, 5 epochs)",
            "Method", "Accuracy (%)")
 
     # Right: per-label sample accuracy (from manifest if available)

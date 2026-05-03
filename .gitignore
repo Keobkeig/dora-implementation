@@ -73,7 +73,6 @@ checkpoints/
 benchmark_results/
 dora_output/
 *.ckpt
-*.pt
 *.pth
 *.bin
 *.safetensors
