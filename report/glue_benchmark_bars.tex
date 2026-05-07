@@ -1,0 +1,93 @@
+\documentclass[border=8pt]{standalone}
+
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% ----------------------------------------------------------
+%  Cornell Palette
+% ----------------------------------------------------------
+\definecolor{CornellRed}   {RGB}{179, 27,  27}
+\definecolor{CornellDark}  {RGB}{ 91,  0,   0}
+\definecolor{CornellMid}   {RGB}{140, 20,  20}
+\definecolor{CornellAccent}{RGB}{220,170,170}
+\definecolor{CornellLight} {RGB}{250,238,238}
+\definecolor{CornellGray}  {RGB}{ 84, 88,  90}
+\definecolor{LoRABlue}     {RGB}{ 60,100,165}
+\definecolor{NumGreen}     {RGB}{ 30,120, 60}
+\definecolor{BodyBg}       {RGB}{255,255,255}
+\definecolor{TableShade}   {RGB}{253,238,238}
+
+\begin{document}
+\begin{tikzpicture}
+\begin{axis}[
+    ybar,
+    width=8.2in,
+    height=5.0in,
+    bar width=22pt,
+    title={GLUE Benchmark --- DoRA vs LoRA vs Full FT (RoBERTa-base)},
+    title style={font=\bfseries\Large},
+    xlabel={Task},
+    ylabel={Metric (\%)},
+    label style={font=\large},
+    symbolic x coords={SST-2,RTE,MRPC (combined)},
+    xtick=data,
+    tick label style={font=\large},
+    ymin=40,
+    ymax=103,
+    ytick={40,50,60,70,80,90,100},
+    enlarge x limits=0.22,
+    grid=major,
+    major grid style={draw=CornellGray!18},
+    axis line style={draw=black!70},
+    tick style={draw=black!70},
+    legend style={
+        at={(0.98,0.98)},
+        anchor=north east,
+        draw=black!15,
+        fill=BodyBg,
+        font=\large,
+        row sep=2pt
+    },
+    area legend,
+    nodes near coords,
+    every node near coord/.append style={
+        font=\small,
+        color=black,
+        yshift=2pt
+    },
+    point meta=explicit symbolic,
+]
+
+\addplot[
+    fill=CornellRed,
+    draw=CornellDark,
+] coordinates {
+    (SST-2,93.2) [93.2]
+    (RTE,70.0) [70.0]
+    (MRPC (combined),88.2) [88.2]
+};
+\addlegendentry{DoRA}
+
+\addplot[
+    fill=LoRABlue,
+    draw=LoRABlue!70!black,
+] coordinates {
+    (SST-2,93.3) [93.3]
+    (RTE,66.1) [66.1]
+    (MRPC (combined),85.9) [85.9]
+};
+\addlegendentry{LoRA}
+
+\addplot[
+    fill=CornellGray,
+    draw=CornellGray!70!black,
+] coordinates {
+    (SST-2,93.2) [93.2]
+    (RTE,53.1) [53.1]
+    (MRPC (combined),74.8) [74.8]
+};
+\addlegendentry{Full FT}
+
+\end{axis}
+\end{tikzpicture}
+\end{document}
