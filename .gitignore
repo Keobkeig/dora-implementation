@@ -100,7 +100,7 @@ temp/
 .idea/
 
 # -----------------------------
-# Presentation build artifacts
+# LaTeX build artifacts (presentation, poster, report)
 # -----------------------------
 presentation/*.aux
 presentation/*.bbl
@@ -117,6 +117,46 @@ presentation/*.synctex.gz
 presentation/*.toc
 presentation/*.vrb
 presentation/*.pdf
+
+poster/*.aux
+poster/*.bbl
+poster/*.bcf
+poster/*.blg
+poster/*.fdb_latexmk
+poster/*.fls
+poster/*.log
+poster/*.nav
+poster/*.out
+poster/*.run.xml
+poster/*.snm
+poster/*.synctex.gz
+poster/*.toc
+poster/*.vrb
+
+report/*.aux
+report/*.bbl
+report/*.bcf
+report/*.blg
+report/*.fdb_latexmk
+report/*.fls
+report/*.log
+report/*.nav
+report/*.out
+report/*.run.xml
+report/*.snm
+report/*.synctex.gz
+report/*.toc
+report/*.vrb
+
+# -----------------------------
+# Claude Code local settings
+# -----------------------------
+.claude/
+
+# -----------------------------
+# Gradio local dev certificates
+# -----------------------------
+code/.gradio/
 
 # -----------------------------
 # Dataset files (too large for git — download via scripts/download_cornell_grasp.py)
