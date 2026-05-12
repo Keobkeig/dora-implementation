@@ -12,7 +12,7 @@ DoRA (Liu et al., 2024) modifies LoRA by decoupling weight magnitude from low-ra
 
 We targeted DoRA's central empirical claim: at equal rank, DoRA should match or outperform LoRA on GLUE, with the largest gains on low-data tasks where gradient interference is highest.
 
-The primary result corresponds to the DoRA paper's GLUE comparison tables for LoRA vs. DoRA; we reproduce this claim on SST-2, MRPC, and RTE, then extend the same comparison to audio, vision, and robotics tasks.
+The primary result corresponds to **Table 1** in the DoRA paper, which compares LoRA vs. DoRA on GLUE. We reproduce this claim on SST-2, MRPC, and RTE, then extend the same comparison to audio, vision, and robotics tasks.
 
 ## 3. GitHub Contents
 
