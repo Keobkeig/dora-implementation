@@ -10,9 +10,9 @@ DoRA (Liu et al., 2024) modifies LoRA by decoupling weight magnitude from low-ra
 
 ## 2. Chosen Result
 
-We targeted DoRA's central empirical claim: at equal rank, DoRA should match or outperform LoRA on GLUE, with the largest gains on low-data tasks where gradient interference is highest.
+We targeted DoRA's central empirical claim: at comparable rank and parameter budget, DoRA can match or outperform LoRA.
 
-The primary result corresponds to **Table 1** in the DoRA paper, which compares LoRA vs. DoRA on GLUE. We reproduce this claim on SST-2, MRPC, and RTE, then extend the same comparison to audio, vision, and robotics tasks.
+The primary result corresponds to **Table 1** in the DoRA paper, which compares PEFT methods on LLaMA-family commonsense reasoning benchmarks. We evaluate the same LoRA-vs-DoRA claim on GLUE classification tasks (SST-2, MRPC, RTE), then extend the comparison to audio, vision, and robotics tasks.
 
 ## 3. GitHub Contents
 
@@ -39,7 +39,7 @@ We implement `DoRALinear`, a drop-in replacement for `nn.Linear` with frozen bas
 | NLP | RoBERTa-base/large, TinyLlama-1.1B, OpenLLaMA-3B | GLUE SST-2/MRPC/RTE | Accuracy, F1 |
 | Audio | Wav2Vec2-base | Google Speech Commands v0.02 | Validation/test accuracy |
 | Vision | ViT-B/16, SigLIP-B/16 | Cornell Grasp | Cornell success rate / IoU |
-| Robotics | SmolVLM / OpenVLA-style VLA stack | LeRobot Push-T | Action MSE |
+| Robotics | SmolVLM-256M for Push-T; OpenVLA-7B architecture audit | LeRobot Push-T | Action MSE / adapter parameter count |
 
 Key modifications: we extend DoRA beyond NLP, include LoRA and full fine-tuning baselines where feasible, and track adapter statistics across epochs. Datasets are not committed; see `data/README.md`.
 
@@ -52,13 +52,13 @@ cd code
 uv sync
 ```
 
-Run commands from `code/`. Windows users should run `uv` from PowerShell. Recommended compute is a CUDA GPU with bf16 support; OpenVLA verification downloads about 14 GB and needs roughly 8 GB VRAM with 4-bit quantization.
+Run commands from `code/`. Windows users should run `uv` from PowerShell. Most training runs benefit from a CUDA GPU with bf16 support; OpenVLA verification downloads the 7B checkpoint and runs the repository's architecture audit/forward pass on CPU in bf16.
 
 | Task | Command |
 |------|---------|
 | RoBERTa GLUE comparison | `bash scripts/run_roberta_experiments.sh` |
 | LLaMA SST-2 scale study | `uv run scripts/train_glue.py --model 1b --task sst2 --bf16` and `uv run scripts/train_glue.py --model 3b --task sst2 --bf16` |
-| Rank sweep | `uv run scripts/train_glue.py --model roberta --task sst2 --method dora --rank 8 --alpha 16 --bf16` |
+| Rank sweep | `uv run scripts/run_rank_sweep.py --task sst2 --ranks 2,4,8,16 --methods dora,lora --bf16` |
 | Cornell Grasp data | `uv run scripts/download_cornell_grasp.py` |
 | Cornell Grasp sweep | `bash scripts/run_grasp_experiments.sh --data_dir ../data/cornell_grasps` |
 | Speech Commands | `uv run scripts/train_speech_commands.py --method dora --rank 8 --alpha 16` |
@@ -103,7 +103,7 @@ Additional cross-modal results:
 |---------|-------------|
 | SST-2 scale study | TinyLlama-1.1B DoRA reaches 96.0%; OpenLLaMA-3B peaks at 81.0% before overfitting. |
 | Speech Commands | Wav2Vec2 DoRA reaches 98.6% validation / 89.7% test accuracy vs. LoRA 98.5% / 89.0%, with 44.6% lower average train loss. |
-| Cornell Grasp | SigLIP features dominate: SigLIP reaches ~20% success vs. ViT under 8%; adapter choice matters less than backbone quality. |
+| Cornell Grasp | SigLIP features dominate: SigLIP reaches ~22% success vs. ViT around 12-13%; adapter choice matters less than backbone quality. |
 | Push-T / VLA | DoRA action MSE drops 63.6 → 27.9 over 3 epochs. |
 | OpenVLA-7B | DoRA can target 224 layers with 21.3M adapter parameters, about 0.28% of a frozen 7.54B model. |
 
