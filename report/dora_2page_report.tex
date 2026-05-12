@@ -45,19 +45,19 @@
 % ----------------------------------------------------------
 
 Fine-tuning large pre-trained models is prohibitively expensive when all parameters must be updated.
-\textbf{LoRA} \cite{hu2022lora} addresses this by freezing model weights $W_0$ and injecting trainable low-rank matrices $\Delta W = BA$, reducing trainable parameters to roughly 1\% of total.
+\textbf{LoRA} [2] addresses this by freezing model weights $W_0$ and injecting trainable low-rank matrices $\Delta W = BA$, reducing trainable parameters to roughly 1\% of total.
 However, LoRA couples magnitude and directional updates within the same low-rank perturbation, which can introduce gradient interference especially on small datasets.
 
-\textbf{DoRA} (Liu et al., 2024) \cite{liu2024dora} decomposes each weight matrix into a learnable magnitude scalar $m$ and a unit-norm direction updated via LoRA: $W' = m \cdot (W_0{+}BA)/\|W_0{+}BA\|_c$.
+\textbf{DoRA} [1] decomposes each weight matrix into a learnable magnitude scalar $m$ and a unit-norm direction updated via LoRA: $W' = m \cdot (W_0{+}BA)/\|W_0{+}BA\|_c$.
 The overhead is $+d$ scalars per layer ($<0.1\%$ of parameters). The paper reports consistent gains over LoRA on NLP benchmarks at equivalent parameter budgets. Our project re-implements DoRA from scratch in PyTorch and evaluates it across four modalities: NLP (RoBERTa/GLUE), audio (Wav2Vec2/Speech Commands), vision (ViT and SigLIP/Cornell Grasp), and robotics (SmolVLM/Push-T).
+The paper we reproduce is \emph{DoRA: Weight-Decomposed Low-Rank Adaptation} by Liu et al. (2024).
 
 % ----------------------------------------------------------
 \section{Chosen Result}
 % ----------------------------------------------------------
 
-We target DoRA's primary claim: \emph{DoRA consistently outperforms LoRA at equivalent rank on GLUE, with the largest gains on low-data tasks (RTE, MRPC).}
-This is the central empirical contribution — magnitude decoupling should matter most where gradient interference is highest: small-dataset tasks where full fine-tuning already fails.
-We extend the evaluation to audio classification, visual grasp pose regression, and VLA action prediction.
+We target DoRA's primary claim from Table~1: at comparable rank and parameter budget, DoRA can outperform LoRA on LLaMA-family commonsense reasoning benchmarks.
+We evaluate the same LoRA-vs.-DoRA claim on smaller GLUE classification tasks (SST-2, MRPC, RTE), then extend it to audio classification, visual grasp pose regression, and VLA action prediction.
 
 % ----------------------------------------------------------
 \section{Methodology}
@@ -109,14 +109,15 @@ Metric: action MSE on held-out rollouts.
 	\caption{GLUE results. RoBERTa-base, rank=8. DoRA/LoRA outperform full FT on small tasks.}
 \end{table}
 
-DoRA matches the paper's claim on low-data tasks: +0.3~pp on RTE, +0.6~pp F1 on MRPC vs.\ LoRA.
+DoRA supports the paper's broader LoRA-vs.-DoRA claim on our low-data GLUE tasks: +0.3~pp on RTE, +0.6~pp F1 on MRPC vs.\ LoRA.
 On SST-2 (large data), LoRA slightly edges DoRA, consistent with the paper's finding that magnitude decoupling provides no benefit when gradients are already well-conditioned by data abundance.
 \textbf{The most striking result is full fine-tuning's collapse}: 54.9\% on RTE (near-chance) and 68.4\% accuracy on MRPC, confirming that updating all 125M parameters on 2.5k examples causes catastrophic overfitting.
 The rank sweep on MRPC shows DoRA at $r{=}16$ (90.3\% combined) matching LoRA at $r{=}32$ (90.1\%), demonstrating parameter efficiency.
 
 \subsection{Audio — Speech Commands}
 
-DoRA achieves \textbf{98.6\% validation / 89.7\% test accuracy} vs.\ LoRA's 98.5\% / 89.0\%, and trains in \textbf{152.8~min} vs.\ 190.8~min (20\% speedup) despite the magnitude scalar overhead.
+DoRA achieves \textbf{98.6\% validation / 89.7\% test accuracy} vs.\ LoRA's 98.5\% / 89.0\%, and trains in \textbf{183.6~min} vs.\ 190.8~min (10\% speedup) despite the magnitude scalar overhead. Most notably, DoRA's
+average train loss is \textbf{44.6\%} less and convergence is faster.
 
 \subsection{Vision — Cornell Grasp}
 
