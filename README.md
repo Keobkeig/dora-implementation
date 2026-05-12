@@ -1,85 +1,79 @@
 # CS4782 Final Project: DoRA Reproduction
 
-Reproduction and extension of **DoRA (Weight-Decomposed Low-Rank Adaptation)** from scratch in PyTorch.  
-We verify original GLUE results, compare DoRA vs LoRA vs full fine-tuning across model scales, and extend DoRA to vision and robotics domains.
+## 1. Introduction
 
-> Liu et al., "DoRA: Weight-Decomposed Low-Rank Adaptation" — arXiv:2402.09353
+This GitHub repository contains our CS 4782 final project: a from-scratch PyTorch re-implementation and extension of **DoRA (Weight-Decomposed Low-Rank Adaptation)**.
 
----
+DoRA (Liu et al., 2024) modifies LoRA by decoupling weight magnitude from low-rank directional updates, aiming to improve parameter-efficient fine-tuning at the same adapter rank and parameter budget.
 
-## Results
+> Liu et al., "DoRA: Weight-Decomposed Low-Rank Adaptation" — ICML 2024, arXiv:2402.09353
 
-### 1 · GLUE — Method Comparison (RoBERTa-base, 125M params)
+## 2. Chosen Result
 
-Hyperparameters: rank=8, α=16, target=`query/key/value`, 5 epochs, lr=2e-4 (adapters) / 2e-5 (full FT), bf16.
+We targeted DoRA's central empirical claim: at equal rank, DoRA should match or outperform LoRA on GLUE, with the largest gains on low-data tasks where gradient interference is highest.
 
-| Task | Train size | Metric | DoRA | LoRA | Full FT | Trainable |
-|------|-----------:|--------|-----:|-----:|--------:|----------:|
-| SST-2 | 67k | Accuracy | 93.1% | **93.3%** | 93.2% | ~1.0% |
-| RTE | 2.5k | Accuracy | **71.1%** | 70.8% | 54.9% | ~1.0% |
-| MRPC | 3.7k | F1 | **90.7%** | 90.1% | 81.2% | ~1.0% |
-| MRPC | 3.7k | Accuracy | **87.0%** | 85.8% | 68.4% | ~1.0% |
+The primary result corresponds to the DoRA paper's GLUE comparison tables for LoRA vs. DoRA; we reproduce this claim on SST-2, MRPC, and RTE, then extend the same comparison to audio, vision, and robotics tasks.
 
-**Finding:** Full fine-tuning collapses on small datasets (RTE, MRPC) — adapting 100% of a 125M model on 2.5k examples causes severe overfitting (RTE: 54.9% ≈ near-random). DoRA/LoRA's constrained parameter budget acts as implicit regularisation. On large data (SST-2, 67k) all three methods converge.
+## 3. GitHub Contents
 
----
-
-### 2 · GLUE — Scale Study (DoRA only, SST-2 Accuracy)
-
-Hyperparameters: rank=8, α=16, target=`q_proj/k_proj/v_proj/o_proj`, 5 epochs, bf16.
-
-| Model | Params | SST-2 Accuracy | Trainable % |
-|-------|-------:|---------------:|------------:|
-| TinyLlama-1.1B | 1.1B | **96.0%** | ~0.10% |
-| OpenLLaMA-3B | 3.0B | 81.0%† | ~0.05% |
-
-† 3B best checkpoint at epoch 2; performance degraded after — likely overfitting with these hyperparameters at this scale.
-
----
-
-### 3 · Cornell Grasp — Vision Extension (ViT-Base / SigLIP)
-
-Grasp pose regression from RGB image → `(x, y, sin2θ, cos2θ, w, h)`.  
-Metric: IoU ≥ 0.25 **and** |Δangle| ≤ 30° (standard Cornell success rate).  
-Dataset: 885 images, 708 train / 177 val, image-level split.
-
-| Backbone | Params | Method | Trainable | Success Rate |
-|----------|-------:|--------|----------:|-------------:|
-| ViT-Base/16 | 87M | DoRA | ~1.0% | 7.9% |
-| ViT-Base/16 | 87M | LoRA | ~1.0% | **6.2%** |
-| ViT-Base/16 | 87M | Full FT | 100% | 0.6% |
-| SigLIP-base/16 (OpenVLA encoder) | 93M | DoRA | ~1.0% | 19.8% |
-| SigLIP-base/16 | 93M | LoRA | ~1.0% | **20.3%** |
-| SigLIP-base/16 | 93M | Full FT | 100% | 15.8% |
-
----
-
-### 4 · OpenVLA-7B — Architecture Verification
-
-DoRA applied to OpenVLA-7B loaded in 4-bit NF4 quantisation (bitsandbytes).
-
-| Strategy | Target layers | Adapter params (rank=8) | Trainable % |
-|----------|--------------|------------------------:|------------:|
-| full (LLM attention + MLP) | 224 layers | **21,348,352** | **0.28%** |
-
-Total parameters: 7.54B. Forward pass verified on CPU. DoRA adapters add 21M parameters to a frozen 7.54B model — less than 0.3% overhead.
-
-To replicate (requires ~14 GB RAM, weights already cached after first run):
-```powershell
-uv run scripts/openvla_demo.py 2>&1 | Tee-Object -FilePath ..\results\openvla_demo.log
+```
+dora-implementation/
+├── README.md                      # Project summary and reproduction guide
+├── code/                          # Re-implementation code, configs, scripts, tests, demo
+├── data/                          # Dataset acquisition notes; raw datasets are not committed
+├── results/                       # Metrics, logs, trainer states, generated examples
+├── poster/                        # In-class poster PDF and assets
+├── report/                        # Final project report PDF and source
+├── LICENSE
+└── .gitignore
 ```
 
----
+Important code paths:
 
-## Reproducing All Experiments
+```
+code/
+├── dora/
+│   ├── layers/                    # dora_linear.py, lora_linear.py, base.py
+│   ├── models/                    # llama.py, vla.py
+│   ├── data/                      # cornell_grasp.py, lerobot_dataset.py
+│   └── utils/                     # math_utils.py, model_utils.py
+├── scripts/
+│   ├── train_glue.py              # GLUE fine-tuning
+│   ├── train_grasp.py             # Cornell Grasp
+│   ├── train_speech_commands.py   # Wav2Vec2 keyword spotting
+│   ├── train_vla.py               # Push-T VLA action prediction
+│   ├── openvla_demo.py            # OpenVLA architecture verification
+│   ├── run_roberta_experiments.sh
+│   ├── run_grasp_experiments.sh
+│   └── download_cornell_grasp.py
+├── configs/
+├── tests/
+└── demo/
+```
 
-> **Windows note:** All `uv run` commands must be run from **PowerShell**, not WSL.  
-> WSL cannot modify the `.venv` created by uv on Windows (NTFS I/O restriction).
+## 4. Re-implementation Details
 
-### 0 · Environment setup
+We implement `DoRALinear`, a drop-in replacement for `nn.Linear` with frozen base weights, low-rank LoRA matrices, and a learnable magnitude vector initialized from the pretrained weight norm. A matched `LoRALinear` baseline lets us compare DoRA vs. LoRA at the same rank and target modules.
+
+Experiments cover four modalities:
+
+| Modality | Models | Dataset | Metric |
+|----------|--------|---------|--------|
+| NLP | RoBERTa-base/large, TinyLlama-1.1B, OpenLLaMA-3B | GLUE SST-2/MRPC/RTE | Accuracy, F1 |
+| Audio | Wav2Vec2-base | Google Speech Commands v0.02 | Validation/test accuracy |
+| Vision | ViT-B/16, SigLIP-B/16 | Cornell Grasp | Cornell success rate / IoU |
+| Robotics | SmolVLM / OpenVLA-style VLA stack | LeRobot Push-T | Action MSE |
+
+Key modifications from the original paper: we extend DoRA beyond NLP, include full fine-tuning baselines where feasible, track adapter statistics across epochs, and evaluate small-data behavior where full fine-tuning tends to overfit.
+
+Datasets are not committed. GLUE, Speech Commands, and Push-T are downloaded into local Hugging Face/LeRobot caches by the scripts; Cornell Grasp is downloaded separately into `data/cornell_grasps/`. See `data/README.md`.
+
+## 5. Reproduction Steps
+
+### Environment setup
 
 ```powershell
-# Install uv (once, if not already installed)
+# Install uv once, if needed
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 # Install Python 3.11 and all dependencies
@@ -88,11 +82,11 @@ cd code
 uv sync
 ```
 
----
+Windows note: all `uv run` commands should be run from PowerShell. WSL may not be able to modify the `.venv` created by uv on Windows.
 
-### 1 · Scale Study — LLaMA 1B and 3B on SST-2
+Recommended compute: CUDA GPU with bf16 support for the main runs. GLUE RoBERTa runs take roughly 5-25 minutes each; Cornell Grasp takes roughly 2 hours for the 6-run sweep; Wav2Vec2 takes roughly 3 hours; OpenVLA architecture verification downloads about 14 GB and needs roughly 8 GB VRAM with 4-bit quantization or enough CPU RAM for CPU loading.
 
-These were the first runs — DoRA on two LLaMA-family models to validate the approach.
+### Scale study: LLaMA-family models on SST-2
 
 ```powershell
 # From code/ directory
@@ -100,154 +94,92 @@ uv run scripts/train_glue.py --model 1b --task sst2 --bf16
 uv run scripts/train_glue.py --model 3b --task sst2 --bf16
 ```
 
-Results saved to `results/glue_sst2_1b_r8/` and `results/glue_sst2_3b_r8/`.
+Results are saved to `results/glue_sst2_1b_r8/` and `results/glue_sst2_3b_r8/`.
 
----
-
-### 2 · Method Comparison — RoBERTa on GLUE (9 runs)
-
-All three methods × three tasks, run sequentially via the batch script:
+### Method comparison: RoBERTa on GLUE
 
 ```powershell
-# From code/ directory (~1.5 h total)
+# From code/ directory; runs DoRA, LoRA, and full fine-tuning on RTE/MRPC/SST-2
 bash scripts/run_roberta_experiments.sh
 ```
 
-Which is equivalent to running each of these individually:
+Equivalent individual commands:
 
 ```powershell
-# RTE (~5 min per run)
 uv run scripts/train_glue.py --model roberta --task rte --method dora --bf16
 uv run scripts/train_glue.py --model roberta --task rte --method lora --bf16
 uv run scripts/train_glue.py --model roberta --task rte --method full --bf16
 
-# MRPC (~10 min per run)
 uv run scripts/train_glue.py --model roberta --task mrpc --method dora --bf16
 uv run scripts/train_glue.py --model roberta --task mrpc --method lora --bf16
 uv run scripts/train_glue.py --model roberta --task mrpc --method full --bf16
 
-# SST-2 (~25 min per run)
 uv run scripts/train_glue.py --model roberta --task sst2 --method dora --bf16
 uv run scripts/train_glue.py --model roberta --task sst2 --method lora --bf16
 uv run scripts/train_glue.py --model roberta --task sst2 --method full --bf16
 ```
 
-Results saved to `results/glue_<task>_roberta_<dora_r8|lora_r8|full>/`.
+Results are saved to `results/glue_<task>_roberta_<dora_r8|lora_r8|full>/`.
 
----
-
-### 2.1 · Rank Robustness (DoRA vs LoRA at multiple ranks)
-
-Run a small rank sweep on RoBERTa-base for SST-2 (fastest GLUE task):
+### Rank robustness
 
 ```powershell
-# Ranks: 2, 4, 8, 16 (DoRA)
 uv run scripts/train_glue.py --model roberta --task sst2 --method dora --rank 2  --alpha 4  --bf16
 uv run scripts/train_glue.py --model roberta --task sst2 --method dora --rank 4  --alpha 8  --bf16
 uv run scripts/train_glue.py --model roberta --task sst2 --method dora --rank 8  --alpha 16 --bf16
 uv run scripts/train_glue.py --model roberta --task sst2 --method dora --rank 16 --alpha 32 --bf16
 
-# Ranks: 2, 4, 8, 16 (LoRA)
 uv run scripts/train_glue.py --model roberta --task sst2 --method lora --rank 2  --alpha 4  --bf16
 uv run scripts/train_glue.py --model roberta --task sst2 --method lora --rank 4  --alpha 8  --bf16
 uv run scripts/train_glue.py --model roberta --task sst2 --method lora --rank 8  --alpha 16 --bf16
 uv run scripts/train_glue.py --model roberta --task sst2 --method lora --rank 16 --alpha 32 --bf16
-```
 
-Each run writes `results/glue_sst2_roberta_<method>_r<rank>/`. Use the summaries exporter:
-
-```powershell
 uv run scripts/export_glue_metrics.py --results_dir ../results --output ../results/glue_run_summaries.json
 ```
 
----
+### Cornell Grasp
 
-### 3 · Vision Extension — Cornell Grasp Dataset (6 runs)
+Download the dataset:
 
-#### Step 1 — Download the dataset
-
-Option A — Kaggle API (requires free [Kaggle account](https://www.kaggle.com/settings) + API token at `~/.kaggle/kaggle.json`):
 ```powershell
+# From code/ directory; requires Kaggle API token at ~/.kaggle/kaggle.json
 uv run scripts/download_cornell_grasp.py
 ```
 
-Option B — Manual browser download from `https://www.kaggle.com/datasets/oneoneliu/cornell-grasp`, then:
+Or download the Kaggle archive manually from `https://www.kaggle.com/datasets/oneoneliu/cornell-grasp` and pass it explicitly:
+
 ```powershell
 uv run scripts/download_cornell_grasp.py --zip_path C:\Users\<you>\Downloads\cornell-grasp.zip
 ```
 
-Dataset lands in `data/cornell_grasps/` (gitignored).
-
-#### Step 2 — Run all 6 experiments
+Run the experiments:
 
 ```powershell
-# From code/ directory (~2 h total)
 bash scripts/run_grasp_experiments.sh --data_dir ../data/cornell_grasps
 ```
 
-Which is equivalent to:
+Equivalent individual commands:
 
 ```powershell
-# ViT-Base/16 (86M — pure vision baseline, ~15 min per run)
 uv run scripts/train_grasp.py --model vit --data_dir ../data/cornell_grasps --method dora --bf16
 uv run scripts/train_grasp.py --model vit --data_dir ../data/cornell_grasps --method lora --bf16
 uv run scripts/train_grasp.py --model vit --data_dir ../data/cornell_grasps --method full --bf16
 
-# SigLIP-base/16 (OpenVLA visual encoder, ~20 min per run)
 uv run scripts/train_grasp.py --model siglip --data_dir ../data/cornell_grasps --method dora --bf16
 uv run scripts/train_grasp.py --model siglip --data_dir ../data/cornell_grasps --method lora --bf16
 uv run scripts/train_grasp.py --model siglip --data_dir ../data/cornell_grasps --method full --bf16
 ```
 
-Results saved to `results/grasp_<vit|siglip>_<dora_r8|lora_r8|full>/`.
+Results are saved to `results/grasp_<vit|siglip>_<dora_r8|lora_r8|full>/`.
 
----
-
-### 3.1 · Export sample visuals (poster)
-
-Push‑T samples (DoRA/LoRA):
-
-```powershell
-uv run scripts/export_vla_samples.py --method dora --adapter_path ../results/vla_pusht_dora_r8/dora_adapter.pt --head_path ../results/vla_pusht_dora_r8/action_head.pt --num_samples 10 --output_dir ../results/pusht_samples_dora
-uv run scripts/export_vla_samples.py --method lora --adapter_path ../results/vla_pusht_lora_r8/lora_adapter.pt --head_path ../results/vla_pusht_lora_r8/action_head.pt --num_samples 10 --output_dir ../results/pusht_samples_lora
-```
-
-Cornell Grasp samples (ViT/SigLIP, DoRA/LoRA):
-
-```powershell
-uv run scripts/export_grasp_samples.py --model vit --data_dir ../data/cornell_grasps --method dora --adapter_path ../results/grasp_vit_dora_r8/dora_adapter.pt --head_path ../results/grasp_vit_dora_r8/grasp_head.pt --num_samples 10 --output_dir ../results/grasp_vit_samples_dora
-uv run scripts/export_grasp_samples.py --model vit --data_dir ../data/cornell_grasps --method lora --adapter_path ../results/grasp_vit_lora_r8/lora_adapter.pt --head_path ../results/grasp_vit_lora_r8/grasp_head.pt --num_samples 10 --output_dir ../results/grasp_vit_samples_lora
-uv run scripts/export_grasp_samples.py --model siglip --data_dir ../data/cornell_grasps --method dora --adapter_path ../results/grasp_siglip_dora_r8/dora_adapter.pt --head_path ../results/grasp_siglip_dora_r8/grasp_head.pt --num_samples 10 --output_dir ../results/grasp_siglip_samples_dora
-uv run scripts/export_grasp_samples.py --model siglip --data_dir ../data/cornell_grasps --method lora --adapter_path ../results/grasp_siglip_lora_r8/lora_adapter.pt --head_path ../results/grasp_siglip_lora_r8/grasp_head.pt --num_samples 10 --output_dir ../results/grasp_siglip_samples_lora
-```
-
----
-
-### 4 · OpenVLA Architecture Demo
-
-Loads OpenVLA-7B in 4-bit NF4 quantisation, identifies DoRA target layers across the visual encoder (SigLIP) and LLM backbone (LLaMA-2), reports theoretical trainable-parameter counts, and runs a forward pass.
-
-**First run downloads ~14 GB. Requires ~8 GB VRAM with 4-bit quant.**
-
-```powershell
-# From code/ directory (~5-10 min, includes download on first run)
-uv run scripts/openvla_demo.py 2>&1 | Tee-Object -FilePath ..\results\openvla_demo.log
-```
-
-Report saved to `results/openvla_dora_report.txt`.
-
----
-
-### 5 · Speech Commands — Wav2Vec2 Keyword Spotting
-
-Fine-tunes `facebook/wav2vec2-base` on `google/speech_commands` for keyword spotting. The default setup uses the standard 12-class label space: `yes/no/up/down/left/right/on/off/stop/go/_unknown_/_silence_`.
+### Speech Commands: Wav2Vec2 keyword spotting
 
 ```powershell
 # From code/ directory
 uv run scripts/train_speech_commands.py --method dora --rank 8 --alpha 16
 ```
 
-On Apple Silicon, start with a subset to estimate training time before running the full dataset:
+Fast Apple Silicon smoke run:
 
 ```powershell
 uv run scripts/train_speech_commands.py `
@@ -261,9 +193,7 @@ uv run scripts/train_speech_commands.py `
   --max_test_samples 500
 ```
 
-The script reports validation accuracy, validation loss, test accuracy, trainable parameters, and measured training time. Results are saved to `results/speech_commands_wav2vec2-base_dora_r8/metrics.json`; adapter weights are saved to `dora_adapter.pt` and the Wav2Vec2 classification head is saved to `classification_head.pt`.
-
-To continue from a saved checkpoint, pass the checkpoint directory and set `--epochs` to the total target epoch count:
+Continue from checkpoint:
 
 ```powershell
 uv run scripts/train_speech_commands.py `
@@ -274,79 +204,145 @@ uv run scripts/train_speech_commands.py `
   --resume_from_checkpoint ../results/speech_commands_wav2vec2-base_dora_r8/checkpoint-10606
 ```
 
----
+The script reports validation accuracy, validation loss, test accuracy, trainable parameters, and measured training time. Results are saved to `results/speech_commands_wav2vec2-base_dora_r8/metrics.json`; adapter weights are saved to `dora_adapter.pt` and the Wav2Vec2 classification head is saved to `classification_head.pt`.
 
-## Repository Layout
+### OpenVLA architecture verification
 
-```
-dora-implementation/
-├── code/
-│   ├── dora/                      # Core library
-│   │   ├── layers/                #   dora_linear.py, lora_linear.py, base.py
-│   │   ├── models/                #   llama.py, vision_transformer.py, vla.py
-│   │   ├── data/                  #   cornell_grasp.py
-│   │   └── utils/                 #   math_utils.py, model_utils.py
-│   ├── scripts/
-│   │   ├── train_glue.py          # GLUE fine-tuning (LLaMA / RoBERTa)
-│   │   ├── train_grasp.py         # Cornell Grasp (ViT / SigLIP)
-│   │   ├── train_speech_commands.py # Wav2Vec2 keyword spotting
-│   │   ├── openvla_demo.py        # OpenVLA architecture verification
-│   │   ├── run_roberta_experiments.sh
-│   │   ├── run_grasp_experiments.sh
-│   │   ├── download_cornell_grasp.py
-│   │   ├── export_glue_metrics.py
-│   │   ├── export_glue_samples.py
-│   │   ├── export_grasp_samples.py
-│   │   └── export_vla_samples.py
-│   ├── benchmarks/                # DoRA vs LoRA micro-benchmarks
-│   ├── configs/models/            # llama_1b/3b/7b.yaml
-│   ├── training/                  # Custom trainer for commonsense tasks
-│   ├── tests/                     # pytest unit tests
-│   └── demo/                      # Gradio interactive demo
-├── data/                          # Datasets — gitignored, download separately
-├── results/                       # Checkpoints and metrics — gitignored
-├── poster/
-└── report/
+```powershell
+# From code/ directory; first run downloads ~14 GB
+uv run scripts/openvla_demo.py 2>&1 | Tee-Object -FilePath ..\results\openvla_demo.log
 ```
 
----
+Report is saved to `results/openvla_dora_report.txt`.
 
-## Key Options
+### Export samples for poster/demo
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--method` | `dora` | `dora` · `lora` · `full` |
-| `--rank` | `8` | LoRA/DoRA rank |
-| `--alpha` | `16.0` | LoRA/DoRA alpha (scaling = α/r) |
-| `--bf16` | off | bfloat16 mixed precision — always use on CUDA |
-| `--target_modules` | auto | attention layer names to adapt (auto-detected per architecture) |
-| `--epochs` | `5` (GLUE) · `30` (grasp) | training epochs |
-| `--wandb` | off | enable Weights & Biases logging |
+```powershell
+uv run scripts/export_vla_samples.py --method dora --adapter_path ../results/vla_pusht_dora_r8/dora_adapter.pt --head_path ../results/vla_pusht_dora_r8/action_head.pt --num_samples 10 --output_dir ../results/pusht_samples_dora
+uv run scripts/export_vla_samples.py --method lora --adapter_path ../results/vla_pusht_lora_r8/lora_adapter.pt --head_path ../results/vla_pusht_lora_r8/action_head.pt --num_samples 10 --output_dir ../results/pusht_samples_lora
 
-### Model presets (`--model`)
+uv run scripts/export_grasp_samples.py --model vit --data_dir ../data/cornell_grasps --method dora --adapter_path ../results/grasp_vit_dora_r8/dora_adapter.pt --head_path ../results/grasp_vit_dora_r8/grasp_head.pt --num_samples 10 --output_dir ../results/grasp_vit_samples_dora
+uv run scripts/export_grasp_samples.py --model vit --data_dir ../data/cornell_grasps --method lora --adapter_path ../results/grasp_vit_lora_r8/lora_adapter.pt --head_path ../results/grasp_vit_lora_r8/grasp_head.pt --num_samples 10 --output_dir ../results/grasp_vit_samples_lora
+uv run scripts/export_grasp_samples.py --model siglip --data_dir ../data/cornell_grasps --method dora --adapter_path ../results/grasp_siglip_dora_r8/dora_adapter.pt --head_path ../results/grasp_siglip_dora_r8/grasp_head.pt --num_samples 10 --output_dir ../results/grasp_siglip_samples_dora
+uv run scripts/export_grasp_samples.py --model siglip --data_dir ../data/cornell_grasps --method lora --adapter_path ../results/grasp_siglip_lora_r8/lora_adapter.pt --head_path ../results/grasp_siglip_lora_r8/grasp_head.pt --num_samples 10 --output_dir ../results/grasp_siglip_samples_lora
+```
 
-| Flag | HuggingFace ID | Params |
-|------|---------------|-------:|
-| `1b` | TinyLlama/TinyLlama-1.1B-Chat-v1.0 | 1.1B |
-| `3b` | openlm-research/open_llama_3b | 3.0B |
-| `7b` | huggyllama/llama-7b | 7.0B |
-| `roberta` | FacebookAI/roberta-base | 125M |
-| `vit` | google/vit-base-patch16-224 | 87M |
-| `siglip` | google/siglip-base-patch16-224 | 93M |
-| `wav2vec2-base` | facebook/wav2vec2-base | 95M |
-
----
-
-## Tests
+### Tests and demo
 
 ```powershell
 cd code
 uv run pytest -q
-```
-
-## Demo
-
-```powershell
-cd code
 uv run python demo/gradio_app.py
 ```
+
+### Key options
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--method` | `dora` | `dora` / `lora` / `full` |
+| `--rank` | `8` | LoRA/DoRA rank |
+| `--alpha` | `16.0` | LoRA/DoRA alpha |
+| `--bf16` | off | bfloat16 mixed precision; use on CUDA |
+| `--target_modules` | auto | Attention layer names to adapt |
+| `--epochs` | `5` GLUE / `30` grasp | Training epochs |
+| `--wandb` | off | Enable Weights & Biases logging |
+
+Model presets:
+
+| Flag | Hugging Face ID | Params |
+|------|-----------------|-------:|
+| `1b` | `TinyLlama/TinyLlama-1.1B-Chat-v1.0` | 1.1B |
+| `3b` | `openlm-research/open_llama_3b` | 3.0B |
+| `7b` | `huggyllama/llama-7b` | 7.0B |
+| `roberta` | `FacebookAI/roberta-base` | 125M |
+| `vit` | `google/vit-base-patch16-224` | 87M |
+| `siglip` | `google/siglip-base-patch16-224` | 93M |
+| `wav2vec2-base` | `facebook/wav2vec2-base` | 95M |
+
+## 6. Results/Insights
+
+### NLP: GLUE method comparison
+
+DoRA's advantage is largest on low-data NLP tasks, matching the poster finding that magnitude decoupling helps most when data is scarce.
+
+| Task | Train size | Metric | DoRA | LoRA | Full FT | Trainable |
+|------|-----------:|--------|-----:|-----:|--------:|----------:|
+| SST-2 | 67k | Accuracy | 93.1% | **93.3%** | 93.2% | ~1.0% |
+| RTE | 2.5k | Accuracy | **71.1%** | 70.8% | 54.9% | ~1.0% |
+| MRPC | 3.7k | F1 | **90.7%** | 90.1% | 81.2% | ~1.0% |
+| MRPC | 3.7k | Accuracy | **87.0%** | 85.8% | 68.4% | ~1.0% |
+
+Full fine-tuning collapses on small datasets: RTE stalls near random-guess accuracy, while DoRA/LoRA's constrained parameter budget acts as useful regularization.
+
+### Scale study: DoRA on SST-2
+
+| Model | Params | SST-2 Accuracy | Trainable % |
+|-------|-------:|---------------:|------------:|
+| TinyLlama-1.1B | 1.1B | **96.0%** | ~0.10% |
+| OpenLLaMA-3B | 3.0B | 81.0%† | ~0.05% |
+
+† 3B best checkpoint was at epoch 2; later performance degraded, likely from overfitting at this scale/hyperparameter setting.
+
+### Audio: Speech Commands with Wav2Vec2-base
+
+Wav2Vec2-base was fine-tuned on Google Speech Commands v0.02 with 84.8k utterances and 12 keyword classes.
+
+| Method | Val Accuracy | Test Accuracy | Train Loss | Test Loss | Trainable | Time |
+|--------|-------------:|--------------:|-----------:|----------:|----------:|-----:|
+| DoRA (r=8) | **98.6%** | **89.7%** | **0.154** | **0.938** | 826.6k | **183.6 min** |
+| LoRA (r=8) | 98.5% | 89.0% | 0.278 | 1.037 | 789.8k | 190.8 min |
+
+DoRA improves test accuracy by +0.7 pp; the magnitude scalar's small overhead is offset by faster directional gradient convergence on the audio encoder.
+
+### Vision: Cornell Grasp
+
+Grasp pose regression predicts `(x, y, sin2θ, cos2θ, w, h)` from RGB images and is scored by Cornell success rate: IoU ≥ 0.25 and |Δangle| ≤ 30°.
+
+| Backbone | Params | Method | Trainable | Success Rate |
+|----------|-------:|--------|----------:|-------------:|
+| ViT-Base/16 | 87M | DoRA | ~1.0% | 7.9% |
+| ViT-Base/16 | 87M | LoRA | ~1.0% | **6.2%** |
+| ViT-Base/16 | 87M | Full FT | 100% | 0.6% |
+| SigLIP-base/16 | 93M | DoRA | ~1.0% | 19.8% |
+| SigLIP-base/16 | 93M | LoRA | ~1.0% | **20.3%** |
+| SigLIP-base/16 | 93M | Full FT | 100% | 15.8% |
+
+The poster-level takeaway is that base model quality matters: SigLIP's richer vision-language pretraining improves grasping far more than the adapter choice alone.
+
+### Robotics and OpenVLA verification
+
+For Push-T, DoRA adapts a VLA model to predict 2D actions from an overhead camera and language instruction; action MSE drops from 63.6 to 27.9 over 3 epochs.
+
+For OpenVLA-7B architecture verification, DoRA targets 224 attention/MLP layers with 21,348,352 adapter parameters, adding about 0.28% trainable parameters to a frozen 7.54B model.
+
+## 7. Conclusion
+
+DoRA reproduced the expected low-data NLP behavior: it is most useful on scarce-data tasks such as RTE and MRPC, where full fine-tuning overfits badly and LoRA/DoRA regularize the update.
+
+Across modalities, DoRA's gains are real but task-dependent. Audio showed a small accuracy gain and smoother convergence, vision depended strongly on the backbone, and VLA training suggested that magnitude decoupling may need more updates or larger models to matter.
+
+Future work from the poster: combine DoRA with QLoRA for 4-bit 7B+ training, test DoRA in diffusion/action-distribution heads, and explore SVD-based variants such as EDoRA.
+
+## 8. References
+
+[1] Liu, S., Wang, H., Yin, S., Wu, C., Qiu, X., & Cheng, Y. (2024). DoRA: Weight-Decomposed Low-Rank Adaptation. ICML 2024. arXiv:2402.09353.
+
+[2] Hu, E., Shen, Y., Wallis, P., et al. (2022). LoRA: Low-Rank Adaptation of Large Language Models. ICLR 2022. arXiv:2106.09685.
+
+[3] Wang, A., Singh, A., Michael, J., et al. (2019). GLUE: A Multi-Task Benchmark and Analysis Platform. ICLR 2019.
+
+[4] Warden, P. (2018). Speech Commands: A Dataset for Limited-Vocabulary Speech Recognition. arXiv:1804.03209.
+
+[5] Kim, M., et al. (2024). OpenVLA: An Open-Source Vision-Language-Action Model. arXiv:2406.09246.
+
+[6] Wolf, T., et al. (2020). Hugging Face Transformers. EMNLP 2020.
+
+[7] Jiang, C., et al. (2023). SmolVLM. Hugging Face.
+
+[8] Nasiri, M., & Garraghan, P. (2025). EDoRA: Efficient Weight-Decomposed Low-Rank Adaptation via SVD. arXiv:2501.12067.
+
+## 9. Acknowledgements
+
+This project was completed for **CS 4782: Introduction to Deep Learning** at Cornell University in Spring 2025.
+
+Project team: Richie Xue, Shaurya Sen, and Kyle Du. We thank the CS 4782 course staff and poster reviewers for feedback during the final project presentation.

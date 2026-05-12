@@ -163,3 +163,4 @@ code/.gradio/
 # -----------------------------
 data/**
 !data/.gitkeep
+!data/README.md
