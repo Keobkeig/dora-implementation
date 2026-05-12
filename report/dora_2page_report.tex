@@ -34,7 +34,8 @@
 \begin{center}
 	{\large\textbf{Exploring DoRA: Weight-Decomposed Low-Rank Adaptation Across Modalities}}\\[4pt]
 	Richie Xue \quad Shaurya Sen \quad Kyle Du\\
-	Cornell University $\cdot$ CS\,4782: Introduction to Deep Learning $\cdot$ Spring 2025
+	Cornell University $\cdot$ CS\,4782: Introduction to Deep Learning $\cdot$ Spring 2025\\
+	\href{https://github.com/Keobkeig/dora-implementation}{github.com/Keobkeig/dora-implementation}
 \end{center}
 \vspace{3pt}
 % \hrule
@@ -49,7 +50,7 @@ Fine-tuning large pre-trained models is prohibitively expensive when all paramet
 However, LoRA couples magnitude and directional updates within the same low-rank perturbation, which can introduce gradient interference especially on small datasets.
 
 \textbf{DoRA} [1] decomposes each weight matrix into a learnable magnitude scalar $m$ and a unit-norm direction updated via LoRA: $W' = m \cdot (W_0{+}BA)/\|W_0{+}BA\|_c$.
-The overhead is $+d$ scalars per layer ($<0.1\%$ of parameters). The paper reports consistent gains over LoRA on NLP benchmarks at equivalent parameter budgets. Our project re-implements DoRA from scratch in PyTorch and evaluates it across four modalities: NLP (RoBERTa/GLUE), audio (Wav2Vec2/Speech Commands), vision (ViT and SigLIP/Cornell Grasp), and robotics (SmolVLM/Push-T).
+The overhead is $+d$ scalars per layer ($<0.1\%$ of parameters). Our project re-implements DoRA from scratch in PyTorch and evaluates it across four modalities: NLP (RoBERTa/GLUE), audio (Wav2Vec2/Speech Commands), vision (ViT and SigLIP/Cornell Grasp), and robotics (SmolVLM/Push-T).
 The paper we reproduce is \emph{DoRA: Weight-Decomposed Low-Rank Adaptation} by Liu et al. (2024).
 
 % ----------------------------------------------------------
